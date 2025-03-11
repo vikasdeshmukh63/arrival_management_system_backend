@@ -1,21 +1,23 @@
-import express from 'express';
-import style from '../controller/style';
+import express from 'express'
+import style from '../controller/style'
+import { authenticateToken, requireAdmin } from '../middleware/auth'
 
 const router = express.Router()
 
 // get all styles
-router.get('/get-all', style.getAllStyles);
+router.get('/get-all', authenticateToken, style.getAllStyles)
 
 // create style
-router.post('/create', style.createStyle);
+router.post('/create', authenticateToken, requireAdmin, style.createStyle)
 
 // delete many styles
-router.delete('/delete-many', style.deleteManyStyles);
+router.delete('/delete-many', authenticateToken, requireAdmin, style.deleteManyStyles)
 
 // update style
-router.put('/:id', style.updateStyle);
+router.put('/:id', authenticateToken, style.updateStyle)
 
 // delete single style
-router.delete('/:id', style.deleteStyle);
+router.delete('/:id', authenticateToken, requireAdmin, style.deleteStyle)
 
 export default router
+

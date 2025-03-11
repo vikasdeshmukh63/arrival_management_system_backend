@@ -178,6 +178,78 @@ export default {
             const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
             return httpError(next, new Error(errorMessage), req, 500)
         }
+    },
+    getProductsWithDiscrepancyAndWithoutDiscrepancy: async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const arrivalId = req.params.arrivalId
+
+            const arrival = await database.Arrival.findOne({
+                where: {
+                    arrival_number: arrivalId
+                }
+            })
+
+            if (!arrival) {
+                return httpError(next, new Error(responseMessage.NOT_FOUND('arrival')), req, 404)
+            }
+
+            const arrivalProducts = await database.ArrivalProduct.findAll({
+                where:{
+                    arrival_id: await arrival.getDataValue('arrival_id')
+                },
+                include:[
+                    {
+                        model: database.Product,
+                        include: [
+                            {
+                                model: database.Category,
+                                attributes: ['category_id', 'name']
+                            },
+                            {
+                                model: database.Style,
+                                attributes: ['style_id', 'name']
+                            },
+                            {
+                                model: database.Brand,
+                                attributes: ['brand_id', 'name']
+                            },
+                            {
+                                model: database.Color,
+                                attributes: ['color_id', 'name']
+                            },
+                            {
+                                model: database.Size,
+                                attributes: ['size_id', 'name']
+                            }
+                        ] 
+                    }
+                ]
+            })
+
+            // Separate products with and without discrepancy
+            const productsWithDiscrepancy = []
+            const productsWithoutDiscrepancy = []
+
+            for (const arrivalProduct of arrivalProducts) {
+                const expectedQuantity = Number(arrivalProduct.getDataValue('expected_quantity'))
+                const receivedQuantity = Number(arrivalProduct.getDataValue('received_quantity'))
+
+                if (expectedQuantity !== receivedQuantity) {
+                    productsWithDiscrepancy.push(arrivalProduct)
+                } else {
+                    productsWithoutDiscrepancy.push(arrivalProduct)
+                }
+            }
+
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, {
+                productsWithDiscrepancy,
+                productsWithoutDiscrepancy
+            })
+            
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+            return httpError(next, new Error(errorMessage), req, 500)
+        }
     }
 }
 

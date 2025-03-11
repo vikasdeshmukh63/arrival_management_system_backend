@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import arrival from '../controller/arrival';
-import { createArrivalSchema, updateArrivalSchema } from '../validations/arrivalValidations';
+import { createArrivalSchema, updateArrivalSchema, startProcessingSchema, scanArrivalSchema } from '../validations/arrivalValidations';
 import { validateRequest } from '../middleware/validateRequest';
 
 const router = Router();
@@ -23,10 +23,13 @@ router.put('/:arrivalId', validateRequest(updateArrivalSchema), arrival.updateAr
 // delete single arrival
 router.delete('/:arrivalId', arrival.deleteArrival);
 
-// // Start processing an arrival
-// router.post('/:id/start', arrivalController.startProcessing);
+// Start processing an arrival
+router.post('/start-processing/:arrivalId', validateRequest(startProcessingSchema), arrival.startProcessing);
 
-// // Continue processing an arrival
-// router.post('/:id/continue', arrivalController.continueProcessing);
+// Scan an arrival
+router.post('/scan/:arrivalId', validateRequest(scanArrivalSchema), arrival.scanArrival);
+
+// Finish processing an arrival
+router.post('/finish-processing/:arrivalId', arrival.finishProcessing);
 
 export default router;

@@ -40,6 +40,13 @@ export interface CreateArrivalRequest {
     notes?: string
 }
 
+export interface StartProcessingRequest {
+    received_pallets?: number
+    received_boxes: number
+    received_kilograms?: number
+    received_pieces?: number
+}
+
 export interface UpdateArrivalRequest {
     title?: string
     supplier_id?: number
@@ -55,6 +62,38 @@ export interface StartProcessingRequest {
     actualPallets: number
     actualBoxes: number
     actualPieces: number
+}
+
+export interface ScanArrivalRequest {
+    barcode?: string
+    condition_id: number
+    received_quantity: number
+    product_id: number
+}
+
+export interface ProductDiscrepancy {
+    product_id: number
+    product_name: string | null
+    product_sku: string | null
+    expected_quantity: number
+    received_quantity: number
+    difference: number
+}
+
+export interface BoxDiscrepancy {
+    expected_boxes: number
+    received_boxes: number
+    difference: number
+}
+
+export interface DiscrepancyResponse {
+    arrival_number: string
+    status: string
+    has_discrepancies: boolean
+    discrepancies: {
+        products: ProductDiscrepancy[] | null
+        boxes: BoxDiscrepancy | null
+    }
 }
 
 export interface ArrivalAttributes {

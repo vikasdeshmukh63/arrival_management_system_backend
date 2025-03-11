@@ -3,7 +3,17 @@ import { Model, Op, WhereOptions, Includeable } from 'sequelize'
 import { EArrivalStatus } from '../constants/application'
 import responseMessage from '../constants/responseMessage'
 import database from '../models/index'
-import { ArrivalAttributes, CreateArrivalRequest, DeleteMultipleArrivalsRequest, UpdateArrivalRequest } from '../types/types'
+import {
+    ArrivalAttributes,
+    BoxDiscrepancy,
+    CreateArrivalRequest,
+    DeleteMultipleArrivalsRequest,
+    DiscrepancyResponse,
+    ProductDiscrepancy,
+    ScanArrivalRequest,
+    StartProcessingRequest,
+    UpdateArrivalRequest
+} from '../types/types'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
 
@@ -42,7 +52,7 @@ export default {
                 include: [
                     {
                         model: database.Product,
-                        through: { 
+                        through: {
                             attributes: ['expected_quantity', 'received_quantity', 'condition_id']
                         },
                         include: [
@@ -73,7 +83,7 @@ export default {
                         attributes: ['supplier_id', 'name']
                     }
                 ],
-                order: [['expected_date', orderDirection]],
+                order: [['expected_date', orderDirection]]
             })
 
             // return response
@@ -99,7 +109,7 @@ export default {
                 include: [
                     {
                         model: database.Product,
-                        through: { 
+                        through: {
                             attributes: ['expected_quantity', 'received_quantity', 'condition_id']
                         },
                         include: [
@@ -129,7 +139,7 @@ export default {
                         model: database.Supplier,
                         attributes: ['supplier_id', 'name']
                     }
-                ],
+                ]
             })
 
             // if arrival is not found, return error
@@ -371,6 +381,240 @@ export default {
         } catch (error) {
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
-    }
+    },
+    // ! start processing arrival
+    startProcessing: async (req: Request<Record<string, never>, unknown, StartProcessingRequest>, res: Response, next: NextFunction) => {
+        try {
+            const arrivalId = req.params.arrivalId
+            const { received_pallets = 0, received_boxes, received_kilograms = 0, received_pieces = 0 } = req.body
+
+            // start a transaction
+            const t = await database.sequelize.transaction()
+
+            try {
+                // find the arrival
+                const arrival = await database.Arrival.findOne({
+                    where: {
+                        arrival_number: arrivalId
+                    },
+                    transaction: t
+                })
+
+                if (!arrival) {
+                    await t.rollback()
+                    return httpError(next, new Error('Arrival not found'), req, 404)
+                }
+
+                // check if arrival is in UPCOMING status
+                if (arrival.getDataValue('status') !== EArrivalStatus.UPCOMING) {
+                    await t.rollback()
+                    return httpError(next, new Error('Only upcoming arrivals can be processed'), req, 403)
+                }
+
+                // update arrival with received quantities and status
+                await arrival.update(
+                    {
+                        received_pallets,
+                        received_boxes,
+                        received_kilograms,
+                        received_pieces,
+                        status: EArrivalStatus.IN_PROGRESS,
+                        started_date: new Date()
+                    },
+                    { transaction: t }
+                )
+
+                // commit transaction
+                await t.commit()
+
+                return httpResponse(req, res, 200, responseMessage.SUCCESS, {
+                    arrival_number: arrivalId,
+                    status: EArrivalStatus.IN_PROGRESS
+                })
+            } catch (error) {
+                // rollback transaction on error
+                await t.rollback()
+                throw error instanceof Error ? error : new Error('Unknown error occurred')
+            }
+        } catch (error) {
+            return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
+        }
+    },
+    // ! scan arrival
+    scanArrival: async (req: Request<Record<string, never>, unknown, ScanArrivalRequest>, res: Response, next: NextFunction) => {
+        try {
+            const arrivalId = req.params.arrivalId
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { condition_id, received_quantity, product_id } = req.body
+
+            // start a transaction
+            const t = await database.sequelize.transaction()
+
+            try {
+                // find the arrival
+                const arrival = await database.Arrival.findOne({
+                    where: {
+                        arrival_number: arrivalId
+                    },
+                    transaction: t
+                })
+
+                if (!arrival) {
+                    await t.rollback()
+                    return httpError(next, new Error('Arrival not found'), req, 404)
+                }
+
+                // check if arrival is in IN_PROGRESS status
+                if (arrival.getDataValue('status') !== EArrivalStatus.IN_PROGRESS) {
+                    await t.rollback()
+                    return httpError(next, new Error('Only in progress arrivals can be scanned'), req, 403)
+                }
+
+                await database.ArrivalProduct.update(
+                    {
+                        condition_id,
+                        received_quantity
+                    },
+                    {
+                        where: {
+                            arrival_id: await arrival.getDataValue('arrival_id'),
+                            product_id: product_id
+                        },
+                        transaction: t
+                    }
+                )
+
+                // commit transaction
+                await t.commit()
+
+                // return response
+                return httpResponse(req, res, 200, responseMessage.SUCCESS, {
+                    arrival_number: arrivalId,
+                    status: EArrivalStatus.IN_PROGRESS
+                })
+            } catch (error) {
+                // rollback transaction on error
+                await t.rollback()
+                throw error instanceof Error ? error : new Error('Unknown error occurred')
+            }
+        } catch (error) {
+            // return error
+            return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
+        }
+    },
+    finishProcessing: async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const arrivalId = req.params.arrivalId
+
+            // start a transaction
+            const t = await database.sequelize.transaction()
+
+            try {
+                // find the arrival
+                const arrival = await database.Arrival.findOne({
+                    where: {
+                        arrival_number: arrivalId
+                    },
+                    transaction: t
+                })
+
+                if (!arrival) {
+                    await t.rollback()
+                    return httpError(next, new Error('Arrival not found'), req, 404)
+                }
+
+                // check if arrival is in IN_PROGRESS status
+                if (arrival.getDataValue('status') !== EArrivalStatus.IN_PROGRESS) {
+                    await t.rollback()
+                    return httpError(next, new Error('Only in progress arrivals can be finished'), req, 403)
+                }
+
+                // Get all arrival products for this arrival to check for discrepancies
+                const arrivalProducts = await database.ArrivalProduct.findAll({
+                    where: {
+                        arrival_id: await arrival.getDataValue('arrival_id')
+                    },
+                    include: [
+                        {
+                            model: database.Product,
+                            attributes: ['product_id', 'name', 'tsku']
+                        }
+                    ],
+                    transaction: t
+                })
+
+                // Check for discrepancies and collect details
+                let hasDiscrepancy = false
+
+                const productDiscrepancies: ProductDiscrepancy[] = []
+
+                for (const product of arrivalProducts) {
+                    const expectedQty = Number(product.getDataValue('expected_quantity'))
+                    const receivedQty = Number(product.getDataValue('received_quantity'))
+
+                    if (expectedQty !== receivedQty) {
+                        hasDiscrepancy = true
+                        const productData = product.get('Product') as { product_id: number; name: string; tsku: string } | null
+
+                        productDiscrepancies.push({
+                            product_id: Number(product.getDataValue('product_id')),
+                            product_name: productData?.name ?? null,
+                            product_sku: productData?.tsku ?? null,
+                            expected_quantity: expectedQty,
+                            received_quantity: receivedQty,
+                            difference: receivedQty - expectedQty
+                        })
+                    }
+                }
+
+                // Check for box discrepancy
+                const expectedBoxes = Number(arrival.getDataValue('expected_boxes'))
+                const receivedBoxes = Number(arrival.getDataValue('received_boxes'))
+
+                const boxDiscrepancy: BoxDiscrepancy | null =
+                    expectedBoxes !== receivedBoxes
+                        ? {
+                              expected_boxes: expectedBoxes,
+                              received_boxes: receivedBoxes,
+                              difference: receivedBoxes - expectedBoxes
+                          }
+                        : null
+
+                // Set appropriate status based on any discrepancy
+                const status = hasDiscrepancy || boxDiscrepancy ? EArrivalStatus.COMPLETED_WITH_DISCREPANCY : EArrivalStatus.FINISHED
+
+                // update arrival with finished date and status
+                await arrival.update(
+                    {
+                        finished_date: new Date(),
+                        status: status
+                    },
+                    { transaction: t }
+                )
+
+                // commit transaction
+                await t.commit()
+
+                // Prepare response with discrepancy details
+                const response: DiscrepancyResponse = {
+                    arrival_number: arrivalId,
+                    status: status,
+                    has_discrepancies: hasDiscrepancy || boxDiscrepancy !== null,
+                    discrepancies: {
+                        products: productDiscrepancies.length > 0 ? productDiscrepancies : null,
+                        boxes: boxDiscrepancy
+                    }
+                }
+
+                // Return success response with discrepancy details
+                return httpResponse(req, res, 200, responseMessage.SUCCESS, response)
+            } catch (error) {
+                return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
+            }
+        } catch (error) {
+            return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
+        }
+    },
+    
 }
 

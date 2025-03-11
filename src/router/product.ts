@@ -20,4 +20,7 @@ router.put('/:barcode', validateRequest(updateProductSchema), product.updateProd
 // delete single product
 router.delete('/:barcode', product.deleteProduct)
 
+// get products with discrepancy and without discrepancy
+router.get('/products-with-discrepancy/:arrivalId', product.getProductsWithDiscrepancyAndWithoutDiscrepancy)
+
 export default router

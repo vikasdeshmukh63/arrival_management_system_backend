@@ -28,13 +28,23 @@ export const updateArrivalSchema = z
 
 export const startProcessingSchema = z
     .object({
-        actualPallets: z.number().int().min(0),
-        actualBoxes: z.number().int().min(0),
-        actualPieces: z.number().int().min(0),
-        actualKilograms: z.number().min(0)
+        received_pallets: z.number().int().min(0),
+        received_boxes: z.number().int().min(0),
+        received_pieces: z.number().int().min(0),
+        received_kilograms: z.number().min(0)
+    })
+    .strict()
+
+export const scanArrivalSchema = z
+    .object({
+        barcode: z.string().min(1).optional(),
+        condition_id: z.number().int().positive(),
+        received_quantity: z.number().int().positive(),
+        product_id: z.number().int().positive()
     })
     .strict()
 
 export type CreateArrivalInput = z.infer<typeof createArrivalSchema>
 export type UpdateArrivalInput = z.infer<typeof updateArrivalSchema>
 export type StartProcessingInput = z.infer<typeof startProcessingSchema>
+export type ScanArrivalInput = z.infer<typeof scanArrivalSchema>

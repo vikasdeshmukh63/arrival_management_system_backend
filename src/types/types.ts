@@ -1,4 +1,5 @@
-import { EArrivalStatus } from '../constants/application'
+import { EArrivalStatus, EUserRole } from '../constants/application'
+import { Model } from 'sequelize'
 
 // success response type
 export type THttpResponse = {
@@ -144,5 +145,13 @@ export interface CreateProductRequest {
 
 export interface DeleteManyProductsRequest {
     barcodes: string[]
+}
+
+export interface IUser extends Model {
+    user_id: number
+    name: string
+    email: string
+    password: string
+    role: EUserRole
 }
 

@@ -11,6 +11,7 @@ import Product from './Product'
 import Size from './Size'
 import Style from './Style'
 import Supplier from './Supplier'
+import User from './User'
 
 // Initialize models with sequelize instance
 const db = {
@@ -24,6 +25,7 @@ const db = {
     Style: Style(sequelize),
     ArrivalProduct: ArrivalProduct(sequelize),
     Condition: Condition(sequelize),
+    User: User(sequelize),
     sequelize
 }
 
@@ -31,22 +33,25 @@ const db = {
 db.Supplier.hasMany(db.Arrival, { foreignKey: 'supplier_id' })
 db.Arrival.belongsTo(db.Supplier, { foreignKey: 'supplier_id' })
 
-db.Product.belongsTo(db.Brand, { foreignKey: 'brand_id' })
-db.Product.belongsTo(db.Category, { foreignKey: 'category_id' })
-db.Product.belongsTo(db.Size, { foreignKey: 'size_id' })
-db.Product.belongsTo(db.Color, { foreignKey: 'color_id' })
-db.Product.belongsTo(db.Style, { foreignKey: 'style_id' })
-
-db.Arrival.belongsToMany(db.Product, { through: db.ArrivalProduct, foreignKey: 'arrival_id' })
-db.Product.belongsToMany(db.Arrival, { through: db.ArrivalProduct, foreignKey: 'product_id' })
-
-db.ArrivalProduct.belongsTo(db.Condition, { foreignKey: 'condition_id' })
-db.Condition.hasMany(db.ArrivalProduct, { foreignKey: 'condition_id' })
-
-db.ArrivalProduct.belongsTo(db.Arrival, { foreignKey: 'arrival_id' })
 db.Arrival.hasMany(db.ArrivalProduct, { foreignKey: 'arrival_id' })
+db.ArrivalProduct.belongsTo(db.Arrival, { foreignKey: 'arrival_id' })
 
-db.ArrivalProduct.belongsTo(db.Product, { foreignKey: 'product_id' })
 db.Product.hasMany(db.ArrivalProduct, { foreignKey: 'product_id' })
+db.ArrivalProduct.belongsTo(db.Product, { foreignKey: 'product_id' })
+
+db.Brand.hasMany(db.Product, { foreignKey: 'brand_id' })
+db.Product.belongsTo(db.Brand, { foreignKey: 'brand_id' })
+
+db.Category.hasMany(db.Product, { foreignKey: 'category_id' })
+db.Product.belongsTo(db.Category, { foreignKey: 'category_id' })
+
+db.Size.hasMany(db.Product, { foreignKey: 'size_id' })
+db.Product.belongsTo(db.Size, { foreignKey: 'size_id' })
+
+db.Color.hasMany(db.Product, { foreignKey: 'color_id' })
+db.Product.belongsTo(db.Color, { foreignKey: 'color_id' })
+
+db.Style.hasMany(db.Product, { foreignKey: 'style_id' })
+db.Product.belongsTo(db.Style, { foreignKey: 'style_id' })
 
 export default db

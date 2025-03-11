@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { Op, WhereOptions } from 'sequelize'
+import { Includeable, Op, WhereOptions } from 'sequelize'
 import responseMessage from '../constants/responseMessage'
 import database from '../models/index'
 import httpError from '../utils/httpError'
@@ -43,13 +43,38 @@ export default {
 
             const products = await database.Product.findAll({
                 where,
-                order: [['name', orderDirection]]
+                order: [['name', orderDirection]],
+                attributes:{
+                    exclude:['brand_id','category_id','color_id','size_id','style_id']
+                },
+                include: [
+                    {
+                        model: database.Category,
+                        attributes: ['category_id', 'name']
+                    },
+                    {
+                        model: database.Style,
+                        attributes: ['style_id', 'name']
+                    },
+                    {
+                        model: database.Brand,
+                        attributes: ['brand_id', 'name']
+                    },
+                    {
+                        model: database.Color,
+                        attributes: ['color_id', 'name']
+                    },
+                    {
+                        model: database.Size,
+                        attributes: ['size_id', 'name']
+                    }
+                ] as Includeable[]
             })
 
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, products)
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, products)
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
-           return httpError(next, new Error(errorMessage), req, 500)
+            return httpError(next, new Error(errorMessage), req, 500)
         }
     },
     createProduct: async (req: Request<Record<string, never>, unknown, CreateProductRequest>, res: Response, next: NextFunction) => {
@@ -74,11 +99,11 @@ export default {
             })
 
             // returning response
-           return httpResponse(req, res, 201, responseMessage.CREATED, product)
+            return httpResponse(req, res, 201, responseMessage.CREATED, product)
         } catch (error) {
             // returning error
             const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
-           return httpError(next, new Error(errorMessage), req, 500)
+            return httpError(next, new Error(errorMessage), req, 500)
         }
     },
     updateProduct: async (req: Request<Record<string, never>, unknown, Partial<CreateProductRequest>>, res: Response, next: NextFunction) => {
@@ -102,11 +127,11 @@ export default {
             }
 
             // returning response
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, product)
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, product)
         } catch (error) {
             // returning error
             const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
-           return httpError(next, new Error(errorMessage), req, 500)
+            return httpError(next, new Error(errorMessage), req, 500)
         }
     },
     deleteProduct: async (req: Request<{ barcode: string }, unknown, DeleteManyProductsRequest>, res: Response, next: NextFunction) => {
@@ -124,11 +149,11 @@ export default {
             }
 
             // returning response
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, barcode)
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, barcode)
         } catch (error) {
             // returning error
             const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
-           return httpError(next, new Error(errorMessage), req, 500)
+            return httpError(next, new Error(errorMessage), req, 500)
         }
     },
     deleteManyProducts: async (req: Request<Record<string, never>, unknown, DeleteManyProductsRequest>, res: Response, next: NextFunction) => {
@@ -147,11 +172,11 @@ export default {
             }
 
             // returning response
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, barcodes)
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, barcodes)
         } catch (error) {
             // returning error
             const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
-           return httpError(next, new Error(errorMessage), req, 500)
+            return httpError(next, new Error(errorMessage), req, 500)
         }
     }
 }

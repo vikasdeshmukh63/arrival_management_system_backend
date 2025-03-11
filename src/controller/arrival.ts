@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { Model, Op, WhereOptions } from 'sequelize'
+import { Model, Op, WhereOptions, Includeable } from 'sequelize'
 import { EArrivalStatus } from '../constants/application'
 import responseMessage from '../constants/responseMessage'
 import database from '../models/index'
@@ -36,10 +36,44 @@ export default {
                 ]
             }
 
-            // get all upcoming arrivals
+            // get all arrivals
             const arrivals = await database.Arrival.findAll({
                 where,
-                order: [['expected_date', orderDirection]]
+                include: [
+                    {
+                        model: database.Product,
+                        through: { 
+                            attributes: ['expected_quantity', 'received_quantity', 'condition_id']
+                        },
+                        include: [
+                            {
+                                model: database.Category,
+                                attributes: ['category_id', 'name']
+                            },
+                            {
+                                model: database.Style,
+                                attributes: ['style_id', 'name']
+                            },
+                            {
+                                model: database.Brand,
+                                attributes: ['brand_id', 'name']
+                            },
+                            {
+                                model: database.Color,
+                                attributes: ['color_id', 'name']
+                            },
+                            {
+                                model: database.Size,
+                                attributes: ['size_id', 'name']
+                            }
+                        ] as Includeable[]
+                    },
+                    {
+                        model: database.Supplier,
+                        attributes: ['supplier_id', 'name']
+                    }
+                ],
+                order: [['expected_date', orderDirection]],
             })
 
             // return response
@@ -61,7 +95,41 @@ export default {
             const arrival = await database.Arrival.findOne({
                 where: {
                     arrival_number: arrivalId
-                }
+                },
+                include: [
+                    {
+                        model: database.Product,
+                        through: { 
+                            attributes: ['expected_quantity', 'received_quantity', 'condition_id']
+                        },
+                        include: [
+                            {
+                                model: database.Category,
+                                attributes: ['category_id', 'name']
+                            },
+                            {
+                                model: database.Style,
+                                attributes: ['style_id', 'name']
+                            },
+                            {
+                                model: database.Brand,
+                                attributes: ['brand_id', 'name']
+                            },
+                            {
+                                model: database.Color,
+                                attributes: ['color_id', 'name']
+                            },
+                            {
+                                model: database.Size,
+                                attributes: ['size_id', 'name']
+                            }
+                        ] as Includeable[]
+                    },
+                    {
+                        model: database.Supplier,
+                        attributes: ['supplier_id', 'name']
+                    }
+                ],
             })
 
             // if arrival is not found, return error
@@ -70,7 +138,7 @@ export default {
             }
 
             // return response
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, arrival)
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, arrival)
         } catch (err) {
             // return error
             const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)

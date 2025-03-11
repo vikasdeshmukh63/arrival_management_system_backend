@@ -41,7 +41,12 @@ db.Arrival.belongsToMany(db.Product, { through: db.ArrivalProduct, foreignKey: '
 db.Product.belongsToMany(db.Arrival, { through: db.ArrivalProduct, foreignKey: 'product_id' })
 
 db.ArrivalProduct.belongsTo(db.Condition, { foreignKey: 'condition_id' })
+db.Condition.hasMany(db.ArrivalProduct, { foreignKey: 'condition_id' })
+
 db.ArrivalProduct.belongsTo(db.Arrival, { foreignKey: 'arrival_id' })
+db.Arrival.hasMany(db.ArrivalProduct, { foreignKey: 'arrival_id' })
+
 db.ArrivalProduct.belongsTo(db.Product, { foreignKey: 'product_id' })
+db.Product.hasMany(db.ArrivalProduct, { foreignKey: 'product_id' })
 
 export default db

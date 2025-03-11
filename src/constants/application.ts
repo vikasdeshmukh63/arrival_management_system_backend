@@ -9,3 +9,8 @@ export enum EArrivalStatus {
     FINISHED = 'finished',
     COMPLETED_WITH_DISCREPANCY = 'completed_with_discrepancy',
 }
+
+export enum EUserRole {
+    ADMIN = 'admin',
+    USER = 'user'
+}

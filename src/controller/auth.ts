@@ -9,6 +9,7 @@ import { LoginRequest, RegisterRequest } from '../validations/authValidations'
 import { IUser } from '../types/types'
 import config from '../config/config'
 import { EUserRole } from '../constants/application'
+import { AuthRequest } from '../middleware/auth'
 
 const jwtSecret: Secret = config.JWT_SECRET || ''
 if (!config.JWT_SECRET) {
@@ -110,5 +111,28 @@ export default {
     logout: (req: Request, res: Response) => {
         res.clearCookie('token')
         return httpResponse(req, res, 200, responseMessage.SUCCESS, { message: 'Logged out successfully' })
+    },
+
+    getCurrentUser: async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const authReq = req as AuthRequest;
+            if (!authReq.user) {
+                throw new Error('User not authenticated');
+            }
+
+            const user = await database.User.findOne({ 
+                where: { user_id: authReq.user.user_id },
+                attributes: ['user_id', 'name', 'email', 'role'] // Exclude sensitive data like password
+            });
+
+            if (!user) {
+                throw new Error(responseMessage.NOT_FOUND('User'));
+            }
+
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, { user });
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG);
+            return httpError(next, err, req, 401);
+        }
     }
 }

@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express, { Application, NextFunction, Request, Response } from 'express'
 import helmet from 'helmet'
+import cookieParser from 'cookie-parser'
 import responseMessage from './constants/responseMessage'
 import httpError from './utils/httpError'
 import globalErrorHandler from './middleware/globalErrorHandler'
@@ -13,12 +14,13 @@ app.use(helmet())
 app.use(
     cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        origin: '*', // allow all origins,
+        origin: '*', // Replace with your frontend URL
         credentials: true
     })
 )
 
 app.use(express.json())
+app.use(cookieParser())
 
 // Routes
 app.use(router)

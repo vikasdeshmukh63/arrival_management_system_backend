@@ -15,6 +15,9 @@ export interface AuthRequest extends Request {
         email: string
         role: EUserRole
     }
+    cookies: {
+        token?: string
+    }
 }
 
 interface TokenPayload {
@@ -37,8 +40,7 @@ type Verify = (token: string, secret: Secret) => object;
 
 export const authenticateToken = (req: AuthRequest, _: Response, next: NextFunction) => {
     try {
-        const authHeader = req.headers.authorization
-        const token = authHeader && authHeader.split(' ')[1]
+        const token = req.cookies.token;
 
         if (!token) {
             throw new Error('Authentication token is required')

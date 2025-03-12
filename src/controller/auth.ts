@@ -25,6 +25,15 @@ const signJWT = (payload: JWTPayload): string => {
     return (sign as (payload: JWTPayload, secret: Secret, options: SignOptions) => string)(payload, jwtSecret, { expiresIn: '24h' })
 }
 
+const setCookieToken = (res: Response, token: string) => {
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    })
+}
+
 export default {
     register: async (req: Request<Record<string, never>, unknown, RegisterRequest>, res: Response, next: NextFunction) => {
         try {
@@ -44,9 +53,10 @@ export default {
                 role
             })) as IUser
 
-            // Generate JWT token
+            // Generate JWT token and set cookie
             const payload: JWTPayload = { user_id: user.user_id, email: user.email, role: user.role }
             const token = signJWT(payload)
+            setCookieToken(res, token)
 
             return httpResponse(req, res, 201, responseMessage.CREATED, {
                 user: {
@@ -54,8 +64,7 @@ export default {
                     name: user.name,
                     email: user.email,
                     role: user.role
-                },
-                token
+                }
             })
         } catch (error) {
             const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG)
@@ -79,9 +88,10 @@ export default {
                 throw new Error('Invalid credentials')
             }
 
-            // Generate JWT token
+            // Generate JWT token and set cookie
             const payload: JWTPayload = { user_id: user.user_id, email: user.email, role: user.role }
             const token = signJWT(payload)
+            setCookieToken(res, token)
 
             return httpResponse(req, res, 200, responseMessage.SUCCESS, {
                 user: {
@@ -89,12 +99,16 @@ export default {
                     name: user.name,
                     email: user.email,
                     role: user.role
-                },
-                token
+                }
             })
         } catch (error) {
             const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG)
             return httpError(next, err, req, 401)
         }
+    },
+
+    logout: (req: Request, res: Response) => {
+        res.clearCookie('token')
+        return httpResponse(req, res, 200, responseMessage.SUCCESS, { message: 'Logged out successfully' })
     }
 }

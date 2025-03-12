@@ -444,7 +444,7 @@ export default {
     scanArrival: async (req: Request<Record<string, never>, unknown, ScanArrivalRequest>, res: Response, next: NextFunction) => {
         try {
             const arrivalId = req.params.arrivalId
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  
             const { condition_id, received_quantity, product_id } = req.body
 
             // start a transaction

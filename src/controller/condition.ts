@@ -6,6 +6,7 @@ import httpResponse from '../utils/httpResponse'
 import responseMessage from '../constants/responseMessage'
 import httpError from '../utils/httpError'
 import { CreateConditionRequest, DeleteManyConditionsRequest } from '../types/types'
+import { getPaginationParams, getPaginatedResponse } from '../utils/pagination'
 
 export default {
     getAllConditions: async (req: Request, res: Response, next: NextFunction) => {
@@ -21,12 +22,18 @@ export default {
                 }
             }
 
-            const conditions = await database.Condition.findAll({
-                where,
-                order: [['name', orderDirection]]
-            })
+            const findAllOptions = {
+                order: [['name', orderDirection]] as [string, string][]
+            }
 
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, conditions)
+            const paginatedResponse = await getPaginatedResponse(
+                database.Condition,
+                where,
+                findAllOptions,
+                getPaginationParams(req)
+            )
+
+           return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
         } catch (error) {
             const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG)
            return httpError(next, err, req, 500)

@@ -67,7 +67,9 @@ export default {
                 order: [['name', orderDirection]] as [string, string][]
             }
 
-            const paginatedResponse = await getPaginatedResponse(database.Product, where, findAllOptions, getPaginationParams(req))
+            const excludeFields = ['brand_id', 'category_id', 'size_id', 'color_id', 'style_id']
+
+            const paginatedResponse = await getPaginatedResponse(database.Product, where, findAllOptions, getPaginationParams(req), excludeFields)
 
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
         } catch (err) {

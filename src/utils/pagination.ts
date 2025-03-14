@@ -38,6 +38,7 @@ export const getPaginatedResponse = async <T extends Model>(
     where: WhereOptions,
     findAllOptions: Omit<FindOptions<T>, 'where' | 'limit' | 'offset'>,
     paginationParams: PaginationParams,
+    excludeFields: string[] = []
 ): Promise<PaginatedResponse<T>> => {
     const { page, itemsPerPage, offset } = paginationParams
 
@@ -49,7 +50,10 @@ export const getPaginatedResponse = async <T extends Model>(
         ...findAllOptions,
         where,
         limit: itemsPerPage,
-        offset
+        offset,
+        attributes: {
+            exclude: excludeFields
+        }
     })
 
     // Calculate pagination metadata

@@ -183,7 +183,7 @@ export interface CreateProductRequest {
 }
 
 export interface DeleteManyProductsRequest {
-    barcodes: string[]
+    tsku: string[]
 }
 
 export interface IUser extends Model {

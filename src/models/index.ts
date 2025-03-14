@@ -33,6 +33,10 @@ const db = {
 db.Supplier.hasMany(db.Arrival, { foreignKey: 'supplier_id' })
 db.Arrival.belongsTo(db.Supplier, { foreignKey: 'supplier_id' })
 
+// Many-to-many relationship between Arrival and Product through ArrivalProduct
+db.Arrival.belongsToMany(db.Product, { through: db.ArrivalProduct, foreignKey: 'arrival_id' })
+db.Product.belongsToMany(db.Arrival, { through: db.ArrivalProduct, foreignKey: 'product_id' })
+
 db.Arrival.hasMany(db.ArrivalProduct, { foreignKey: 'arrival_id' })
 db.ArrivalProduct.belongsTo(db.Arrival, { foreignKey: 'arrival_id' })
 

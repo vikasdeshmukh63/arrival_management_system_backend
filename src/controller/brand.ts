@@ -6,39 +6,38 @@ import httpResponse from '../utils/httpResponse'
 import responseMessage from '../constants/responseMessage'
 import httpError from '../utils/httpError'
 import { CreateBrandRequest, DeleteManyBrandsRequest } from '../types/types'
+import { getPaginationParams, getPaginatedResponse } from '../utils/pagination'
 
 export default {
     // ! get all brands
     getAllBrands: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            // if order query is not provided, default to descending order
-            const orderParam = req.query.order as string | undefined
-            const orderDirection = orderParam?.toLocaleLowerCase() === 'desc' ? 'DESC' : 'ASC'
-            // if search query is not provided, default to empty stirng
             const searchQuery = typeof req.query.search === 'string' ? req.query.search : ''
+            const orderParam = req.query.order as string | undefined
+            const orderDirection = orderParam?.toLowerCase() === 'desc' ? 'DESC' : 'ASC'
 
-            // search obj
             const where: WhereOptions = {}
-
-            // if search query is provided, add to serach obj
             if (searchQuery) {
-                where.name = {
-                    [Op.iLike]: `%${searchQuery}%`
-                }
+                where[Op.or as keyof WhereOptions] = [
+                    { name: { [Op.iLike]: `%${searchQuery}%` } }
+                ]
             }
 
-            // get all brands
-            const brands = await database.Brand.findAll({
-                where,
-                order: [['name', orderDirection]]
-            })
+            const findAllOptions = {
+                order: [['name', orderDirection]] as [string, string][]
+            }
 
-            // return response
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, brands)
-        } catch (error) {
-            // return error
-            const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG)
-            httpError(next, err, req, 500)
+            const paginatedResponse = await getPaginatedResponse(
+                database.Brand,
+                where,
+                findAllOptions,
+                getPaginationParams(req)
+            )
+
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)
+            return httpError(next, error, req, 500)
         }
     },
     // ! create brands

@@ -16,10 +16,10 @@ router.post('/create', authenticateToken, requireAdmin, validateRequest(createPr
 router.delete('/delete-many', authenticateToken, requireAdmin, product.deleteManyProducts)
 
 // update product
-router.put('/:barcode', authenticateToken, validateRequest(updateProductSchema), product.updateProduct)
+router.put('/:tsku', authenticateToken, validateRequest(updateProductSchema), product.updateProduct)
 
 // delete single product
-router.delete('/:barcode', authenticateToken, requireAdmin, product.deleteProduct)
+router.delete('/:tsku', authenticateToken, requireAdmin, product.deleteProduct)
 
 // get products with discrepancy and without discrepancy
 router.get('/products-with-discrepancy/:arrivalId', authenticateToken, product.getProductsWithDiscrepancyAndWithoutDiscrepancy)

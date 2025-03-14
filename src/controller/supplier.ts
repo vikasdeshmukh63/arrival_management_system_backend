@@ -5,41 +5,39 @@ import database from '../models/index'
 import { CreateSupplierRequest, DeleteManySuppliersRequest } from '../types/types'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
+import { getPaginationParams, getPaginatedResponse } from '../utils/pagination'
 
 export default {
     getAllSuppliers: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            // if order query is not provided, default to descending order
-            const orderParam = req.query.order as string | undefined
-            const orderDirection = orderParam?.toLocaleLowerCase() === 'desc' ? 'DESC' : 'ASC'
-            // if search query is not provided, default to empty string
             const searchQuery = typeof req.query.search === 'string' ? req.query.search : ''
+            const orderParam = req.query.order as string | undefined
+            const orderDirection = orderParam?.toLowerCase() === 'desc' ? 'DESC' : 'ASC'
 
-            // Initialize where clause
             const where: WhereOptions = {}
-
-            // search obj
             if (searchQuery) {
                 where[Op.or as keyof WhereOptions] = [
                     { name: { [Op.iLike]: `%${searchQuery}%` } },
                     { email: { [Op.iLike]: `%${searchQuery}%` } },
-                    { phone: { [Op.iLike]: `%${searchQuery}%` } },
-                    { contact_person: { [Op.iLike]: `%${searchQuery}%` } },
-                    { address: { [Op.iLike]: `%${searchQuery}%` } }
+                    { phone: { [Op.iLike]: `%${searchQuery}%` } }
                 ]
             }
 
-            // Get suppliers with search and order
-            const suppliers = await database.Supplier.findAll({
-                where,
-                order: [['name', orderDirection]]
-            })
+            const findAllOptions = {
+                order: [['name', orderDirection]] as [string, string][]
+            }
 
-            // return response
-           return httpResponse(req, res, 200, responseMessage.SUCCESS, suppliers)
-        } catch (error) {
-            const err = error instanceof Error ? error : new Error('Something went wrong')
-           return httpError(next, err, req, 500)
+            const paginatedResponse = await getPaginatedResponse(
+                database.Supplier,
+                where,
+                findAllOptions,
+                getPaginationParams(req)
+            )
+
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)
+            return httpError(next, error, req, 500)
         }
     },
     createSupplier: async (req: Request<Record<string, never>, unknown, CreateSupplierRequest>, res: Response, next: NextFunction) => {

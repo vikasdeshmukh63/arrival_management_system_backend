@@ -10,6 +10,7 @@ import styleRouter from '../router/style'
 import supplierRouter from '../router/supplier'
 import productRouter from '../router/product'
 import authRouter from '../router/auth'
+import statisticsRouter from '../router/statistics'
 
 const router = express.Router()
 
@@ -24,5 +25,6 @@ router.use('/api/styles', styleRouter)
 router.use('/api/suppliers', supplierRouter)
 router.use('/api/products', productRouter)
 router.use('/api/auth', authRouter)
+router.use('/api/statistics', statisticsRouter)
 
 export default router

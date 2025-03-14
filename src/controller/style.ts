@@ -5,30 +5,37 @@ import { WhereOptions, Op } from 'sequelize'
 import httpResponse from '../utils/httpResponse'
 import responseMessage from '../constants/responseMessage'
 import httpError from '../utils/httpError'
+import { getPaginationParams, getPaginatedResponse } from '../utils/pagination'
 
 export default {
     getAllStyles: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const orderParam = req.query.order as string | undefined
-            const orderDirection = orderParam?.toLocaleLowerCase() === 'desc' ? 'DESC' : 'ASC'
             const searchQuery = typeof req.query.search === 'string' ? req.query.search : ''
+            const orderParam = req.query.order as string | undefined
+            const orderDirection = orderParam?.toLowerCase() === 'desc' ? 'DESC' : 'ASC'
 
             const where: WhereOptions = {}
             if (searchQuery) {
-                where.name = {
-                    [Op.iLike]: `%${searchQuery}%`
-                }
+                where[Op.or as keyof WhereOptions] = [
+                    { name: { [Op.iLike]: `%${searchQuery}%` } }
+                ]
             }
 
-            const styles = await database.Style.findAll({
-                where,
-                order: [['name', orderDirection]]
-            })
+            const findAllOptions = {
+                order: [['name', orderDirection]] as [string, string][]
+            }
 
-            return httpResponse(req, res, 200, responseMessage.SUCCESS, styles)
-        } catch (error) {
-            const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG)
-            return httpError(next, err, req, 500)
+            const paginatedResponse = await getPaginatedResponse(
+                database.Style,
+                where,
+                findAllOptions,
+                getPaginationParams(req)
+            )
+
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)
+            return httpError(next, error, req, 500)
         }
     },
 

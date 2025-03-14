@@ -16,15 +16,14 @@ import {
 } from '../types/types'
 import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
+import { getPaginationParams, getPaginatedResponse } from '../utils/pagination'
 
 export default {
     // ! get all arrivals with filters
     getAllArrivals: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            // if order query is not provided, default to descending order
             const orderParam = req.query.order as string | undefined
             const orderDirection = orderParam?.toLowerCase() === 'desc' ? 'DESC' : 'ASC'
-            // if search query is not provided, default to empty string
             const searchQuery = typeof req.query.search === 'string' ? req.query.search : ''
             const status = req.query.status as string | undefined
             const ne = req.query.ne === 'true'
@@ -46,9 +45,7 @@ export default {
                 ]
             }
 
-            // get all arrivals
-            const arrivals = await database.Arrival.findAll({
-                where,
+            const findAllOptions = {
                 include: [
                     {
                         model: database.Product,
@@ -83,13 +80,18 @@ export default {
                         attributes: ['supplier_id', 'name']
                     }
                 ],
-                order: [['expected_date', orderDirection]]
-            })
+                order: [['expected_date', orderDirection]] as [string, string][]
+            }
 
-            // return response
-            return httpResponse(req, res, 200, responseMessage.SUCCESS, arrivals)
+            const paginatedResponse = await getPaginatedResponse(
+                database.Arrival,
+                where,
+                findAllOptions,
+                getPaginationParams(req)
+            )
+
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
         } catch (err) {
-            // return error
             const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)
             return httpError(next, error, req, 500)
         }

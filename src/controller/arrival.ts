@@ -52,6 +52,9 @@ export default {
                         through: {
                             attributes: ['expected_quantity', 'received_quantity', 'condition_id']
                         },
+                        attributes: {
+                            exclude: ['brand_id', 'category_id', 'size_id', 'color_id', 'style_id']
+                        },
                         include: [
                             {
                                 model: database.Category,
@@ -83,11 +86,14 @@ export default {
                 order: [['expected_date', orderDirection]] as [string, string][]
             }
 
+            const excludeFields = ['supplier_id']
+
             const paginatedResponse = await getPaginatedResponse(
                 database.Arrival,
                 where,
                 findAllOptions,
-                getPaginationParams(req)
+                getPaginationParams(req),
+                excludeFields
             )
 
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
@@ -113,6 +119,9 @@ export default {
                         model: database.Product,
                         through: {
                             attributes: ['expected_quantity', 'received_quantity', 'condition_id']
+                        },
+                        attributes: {
+                            exclude: ['brand_id', 'category_id', 'size_id', 'color_id', 'style_id']
                         },
                         include: [
                             {
@@ -141,7 +150,10 @@ export default {
                         model: database.Supplier,
                         attributes: ['supplier_id', 'name']
                     }
-                ]
+                ],
+                attributes:{
+                    exclude: ['supplier_id']
+                }
             })
 
             // if arrival is not found, return error

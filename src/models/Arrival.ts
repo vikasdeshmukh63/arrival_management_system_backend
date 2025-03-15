@@ -31,9 +31,17 @@ const Arrival = (sequelize: Sequelize) =>
             finished_date: DataTypes.DATE,
             status: {
                 type: DataTypes.STRING(20),
-                defaultValue: EArrivalStatus.UPCOMING,
+                defaultValue: EArrivalStatus.NOT_INITIATED,
                 validate: {
-                    isIn: [[EArrivalStatus.UPCOMING, EArrivalStatus.IN_PROGRESS, EArrivalStatus.FINISHED, EArrivalStatus.COMPLETED_WITH_DISCREPANCY]]
+                    isIn: [
+                        [
+                            EArrivalStatus.NOT_INITIATED,
+                            EArrivalStatus.UPCOMING,
+                            EArrivalStatus.IN_PROGRESS,
+                            EArrivalStatus.FINISHED,
+                            EArrivalStatus.COMPLETED_WITH_DISCREPANCY
+                        ]
+                    ]
                 }
             },
             expected_pallets: DataTypes.INTEGER,

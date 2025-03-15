@@ -5,9 +5,9 @@ export const createArrivalSchema = z
         title: z.string().min(1),
         supplier_id: z.number().int().positive(),
         expected_boxes: z.number().int().positive(),
-        expected_pallets: z.number().int().positive(),
-        expected_pieces: z.number().int().positive(),
-        expected_kilograms: z.number().positive(),
+        expected_pallets: z.number().int().positive().optional(),
+        expected_pieces: z.number().int().positive().optional(),
+        expected_kilograms: z.number().positive().optional(),
         expected_date: z.string().datetime(),
         notes: z.string().optional()
     })

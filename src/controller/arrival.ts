@@ -4,6 +4,7 @@ import { EArrivalStatus } from '../constants/application'
 import responseMessage from '../constants/responseMessage'
 import database from '../models/index'
 import {
+    AddProductsToArrivalRequest,
     ArrivalAttributes,
     BoxDiscrepancy,
     CreateArrivalRequest,
@@ -88,13 +89,7 @@ export default {
 
             const excludeFields = ['supplier_id']
 
-            const paginatedResponse = await getPaginatedResponse(
-                database.Arrival,
-                where,
-                findAllOptions,
-                getPaginationParams(req),
-                excludeFields
-            )
+            const paginatedResponse = await getPaginatedResponse(database.Arrival, where, findAllOptions, getPaginationParams(req), excludeFields)
 
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
         } catch (err) {
@@ -151,7 +146,7 @@ export default {
                         attributes: ['supplier_id', 'name']
                     }
                 ],
-                attributes:{
+                attributes: {
                     exclude: ['supplier_id']
                 }
             })
@@ -218,7 +213,7 @@ export default {
                     expected_pieces,
                     expected_date: new Date(expected_date),
                     notes: notes || null,
-                    status: EArrivalStatus.UPCOMING,
+                    status: EArrivalStatus.NOT_INITIATED,
                     expected_kilograms,
                     received_kilograms: null
                 }
@@ -359,7 +354,10 @@ export default {
             }
 
             // if found but status is other than upcoming
-            if (foundArrival.getDataValue('status') !== EArrivalStatus.UPCOMING) {
+            if (
+                foundArrival.getDataValue('status') !== EArrivalStatus.UPCOMING &&
+                foundArrival.getDataValue('status') !== EArrivalStatus.NOT_INITIATED
+            ) {
                 return httpError(next, new Error('you can only edit the upcoming arrivals'), req, 403)
             }
 
@@ -458,7 +456,7 @@ export default {
     scanArrival: async (req: Request<Record<string, never>, unknown, ScanArrivalRequest>, res: Response, next: NextFunction) => {
         try {
             const arrivalId = req.params.arrivalId
-  
+
             const { condition_id, received_quantity, product_id } = req.body
 
             // start a transaction
@@ -629,6 +627,77 @@ export default {
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
-    
-}
+    // ! add products to arrival
+    addProductsToArrival: async (
+        req: Request<Record<string, never>, unknown, { arrival_products: AddProductsToArrivalRequest[] }>,
+        res: Response,
+        next: NextFunction
+    ) => {
+        try {
+            const arrivalId = req.params.arrivalId
 
+            const { arrival_products }: { arrival_products: AddProductsToArrivalRequest[] } = req.body
+
+            // start a transaction
+            const t = await database.sequelize.transaction()
+
+            try {
+                // find the arrival
+                const arrival = await database.Arrival.findOne({
+                    where: {
+                        arrival_number: arrivalId
+                    },
+                    transaction: t
+                })
+
+                if (!arrival) {
+                    await t.rollback()
+                    return httpError(next, new Error('Arrival not found'), req, 404)
+                }
+
+                // check if arrival is in UPCOMING or NOT_INITIATED status
+                if (arrival.getDataValue('status') !== EArrivalStatus.UPCOMING && arrival.getDataValue('status') !== EArrivalStatus.NOT_INITIATED) {
+                    await t.rollback()
+                    return httpError(next, new Error('Only upcoming or not initiated arrivals can be edited'), req, 403)
+                }
+
+                // removing the existing products from arrival products table
+                await database.ArrivalProduct.destroy({
+                    where: {
+                        arrival_id: await arrival.getDataValue('arrival_id')
+                    },
+                    transaction: t
+                })
+
+                // adding the new products to arrival products table
+                await database.ArrivalProduct.bulkCreate(
+                    arrival_products.map((product) => ({
+                        arrival_id: arrival.getDataValue('arrival_id') as number,
+                        product_id: product.product_id,
+                        expected_quantity: product.expected_quantity,
+                        received_quantity: 0,
+                        condition_id: product.condition_id
+                    })),
+                    { transaction: t }
+                )
+
+                // update arrival status
+                await arrival.update({ status: EArrivalStatus.UPCOMING }, { transaction: t })
+
+                // commit transaction
+                await t.commit()
+
+                return httpResponse(req, res, 200, responseMessage.SUCCESS, {
+                    arrival_number: arrivalId,
+                    status: EArrivalStatus.UPCOMING
+                })
+            } catch (error) {
+                // rollback transaction on error
+                await t.rollback()
+                throw error instanceof Error ? error : new Error('Unknown error occurred')
+            }
+        } catch (error) {
+            return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
+        }
+    }
+}

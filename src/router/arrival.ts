@@ -33,5 +33,8 @@ router.post('/scan/:arrivalId', authenticateToken, validateRequest(scanArrivalSc
 // Finish processing an arrival
 router.post('/finish-processing/:arrivalId', authenticateToken, arrival.finishProcessing)
 
+// add products to arrival
+router.post('/add-products/:arrivalId', authenticateToken, requireAdmin, arrival.addProductsToArrival)
+
 export default router
 

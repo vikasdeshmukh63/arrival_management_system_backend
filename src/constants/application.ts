@@ -8,6 +8,7 @@ export enum EArrivalStatus {
     IN_PROGRESS = 'in_progress',
     FINISHED = 'finished',
     COMPLETED_WITH_DISCREPANCY = 'discrepancy',
+    NOT_INITIATED = 'not_initiated'
 }
 
 export enum EUserRole {

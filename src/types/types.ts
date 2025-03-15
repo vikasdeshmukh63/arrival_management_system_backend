@@ -71,6 +71,12 @@ export interface ScanArrivalRequest {
     product_id: number
 }
 
+export interface AddProductsToArrivalRequest {
+    product_id: number
+    expected_quantity: number,
+    condition_id: number
+}
+
 export interface ProductDiscrepancy {
     product_id: number
     product_name: string | null
@@ -104,7 +110,12 @@ export interface ArrivalAttributes {
     expected_date: Date
     started_date: Date | null
     finished_date: Date | null
-    status: EArrivalStatus.UPCOMING | EArrivalStatus.IN_PROGRESS | EArrivalStatus.FINISHED | EArrivalStatus.COMPLETED_WITH_DISCREPANCY
+    status:
+        | EArrivalStatus.NOT_INITIATED
+        | EArrivalStatus.UPCOMING
+        | EArrivalStatus.IN_PROGRESS
+        | EArrivalStatus.FINISHED
+        | EArrivalStatus.COMPLETED_WITH_DISCREPANCY
     expected_pallets: number | null
     expected_boxes: number
     expected_kilograms: number
@@ -193,4 +204,3 @@ export interface IUser extends Model {
     password: string
     role: EUserRole
 }
-

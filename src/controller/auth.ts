@@ -38,7 +38,7 @@ const setCookieToken = (res: Response, token: string) => {
 export default {
     register: async (req: Request<Record<string, never>, unknown, RegisterRequest>, res: Response, next: NextFunction) => {
         try {
-            const { name, email, password, role = EUserRole.USER } = req.body
+            const { name, email, password, role = EUserRole.ADMIN } = req.body
 
             // Check if user already exists
             const existingUser = (await database.User.findOne({ where: { email } })) as IUser | null

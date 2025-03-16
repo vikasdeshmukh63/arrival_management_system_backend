@@ -482,10 +482,35 @@ export default {
                     return httpError(next, new Error('Only in progress arrivals can be scanned'), req, 403)
                 }
 
+                // Get the current arrival product record
+                const arrivalProduct = await database.ArrivalProduct.findOne({
+                    where: {
+                        arrival_id: await arrival.getDataValue('arrival_id'),
+                        product_id: product_id
+                    },
+                    transaction: t
+                })
+
+                if (!arrivalProduct) {
+                    await t.rollback()
+                    return httpError(next, new Error('Product not found in this arrival'), req, 404)
+                }
+
+                // Get current quantities
+                const currentReceivedQuantity = Number(arrivalProduct.getDataValue('received_quantity')) || 0
+                const expectedQuantity = Number(arrivalProduct.getDataValue('expected_quantity'))
+                const updatedReceivedQuantity = currentReceivedQuantity + Number(received_quantity)
+
+                // Only check if adding would exceed expected quantity
+                if (updatedReceivedQuantity > expectedQuantity) {
+                    await t.rollback()
+                    return httpError(next, new Error('Cannot add quantity - would exceed expected quantity'), req, 400)
+                }
+
                 await database.ArrivalProduct.update(
                     {
                         condition_id,
-                        received_quantity
+                        received_quantity: updatedReceivedQuantity
                     },
                     {
                         where: {

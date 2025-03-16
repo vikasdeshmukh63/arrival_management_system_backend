@@ -28,10 +28,10 @@ export const updateArrivalSchema = z
 
 export const startProcessingSchema = z
     .object({
-        received_pallets: z.number().int().min(0),
+        received_pallets: z.number().int().min(0).optional(),
         received_boxes: z.number().int().min(0),
-        received_pieces: z.number().int().min(0),
-        received_kilograms: z.number().min(0)
+        received_pieces: z.number().int().min(0).optional(),
+        received_kilograms: z.number().min(0).optional()
     })
     .strict()
 

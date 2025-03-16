@@ -8,6 +8,13 @@ import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
 import { getPaginatedResponse, getPaginationParams } from '../utils/pagination'
 
+interface ArrivalProductData {
+    expected_quantity: number;
+    received_quantity: number;
+    Product: any; // You can make this more specific if needed
+    [key: string]: any;
+}
+
 export default {
     getAllProducts: async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -17,8 +24,8 @@ export default {
 
             const where: WhereOptions = {}
 
-              // Handle numeric filters
-              const numericFilters = {
+            // Handle numeric filters
+            const numericFilters = {
                 category: 'category_id',
                 brand: 'brand_id',
                 color: 'color_id',
@@ -32,7 +39,7 @@ export default {
                     where[whereKey] = parseInt(value)
                 }
             })
-            
+
             if (searchQuery) {
                 where[Op.or as keyof WhereOptions] = [
                     { name: { [Op.iLike]: `%${searchQuery}%` } },
@@ -200,6 +207,9 @@ export default {
                 include: [
                     {
                         model: database.Product,
+                        attributes: {
+                            exclude: ['brand_id', 'category_id', 'size_id', 'color_id', 'style_id']
+                        },
                         include: [
                             {
                                 model: database.Category,
@@ -226,7 +236,6 @@ export default {
                 ]
             })
 
-            // Separate products with and without discrepancy
             const productsWithDiscrepancy = []
             const productsWithoutDiscrepancy = []
 
@@ -234,10 +243,22 @@ export default {
                 const expectedQuantity = Number(arrivalProduct.getDataValue('expected_quantity'))
                 const receivedQuantity = Number(arrivalProduct.getDataValue('received_quantity'))
 
-                if (expectedQuantity !== receivedQuantity) {
-                    productsWithDiscrepancy.push(arrivalProduct)
-                } else {
-                    productsWithoutDiscrepancy.push(arrivalProduct)
+                if (receivedQuantity > 0) {
+                    const productWithoutDiscrepancy: ArrivalProductData = {
+                        ...arrivalProduct.toJSON(),
+                        expected_quantity: receivedQuantity,
+                        received_quantity: receivedQuantity
+                    }
+                    productsWithoutDiscrepancy.push(productWithoutDiscrepancy)
+                }
+
+                if (expectedQuantity > receivedQuantity) {
+                    const productWithDiscrepancy: ArrivalProductData = {
+                        ...arrivalProduct.toJSON(),
+                        expected_quantity: expectedQuantity - receivedQuantity,
+                        received_quantity: 0
+                    }
+                    productsWithDiscrepancy.push(productWithDiscrepancy)
                 }
             }
 

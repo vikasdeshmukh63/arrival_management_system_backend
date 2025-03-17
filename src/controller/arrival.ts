@@ -23,9 +23,16 @@ export default {
     // ! get all arrivals with filters
     getAllArrivals: async (req: Request, res: Response, next: NextFunction) => {
         try {
+            // get order param
             const orderParam = req.query.order as string | undefined
+
+            // get order direction
             const orderDirection = orderParam?.toLowerCase() === 'desc' ? 'DESC' : 'ASC'
+
+            // get search query
             const searchQuery = typeof req.query.search === 'string' ? req.query.search : ''
+
+            // get status
             const status = req.query.status as string | undefined
             const ne = req.query.ne === 'true'
 
@@ -46,6 +53,7 @@ export default {
                 ]
             }
 
+            // find all options
             const findAllOptions = {
                 include: [
                     {
@@ -87,12 +95,16 @@ export default {
                 order: [['expected_date', orderDirection]] as [string, string][]
             }
 
+            // exclude fields
             const excludeFields = ['supplier_id']
 
+            // get paginated response
             const paginatedResponse = await getPaginatedResponse(database.Arrival, where, findAllOptions, getPaginationParams(req), excludeFields)
 
+            // return response
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
         } catch (err) {
+            // return error
             const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)
             return httpError(next, error, req, 500)
         }
@@ -167,33 +179,35 @@ export default {
     // ! create arrival
     createArrival: async (req: Request<Record<string, never>, unknown, CreateArrivalRequest>, res: Response, next: NextFunction) => {
         try {
+            // get body
             const { title, supplier_id, expected_boxes, expected_pallets, expected_pieces, expected_date, notes, expected_kilograms } = req.body
 
-            // Start a transaction
+            // start a transaction
             const t = await database.sequelize.transaction()
 
             try {
-                // Generate a unique arrival number
+                // generate a unique arrival number
                 let arrivalNumber
                 let isUnique = false
 
                 do {
-                    // Combination of timestamp and random 4-digit number
+                    // combination of timestamp and random 4-digit number
                     const randomPart = Math.floor(1000 + Math.random() * 9000) // random 4-digit number
                     arrivalNumber = `ARR${Date.now()}${randomPart}`
 
-                    // Check if the generated arrival number already exists
+                    // check if the generated arrival number already exists
                     const existingArrival = await database.Arrival.findOne({
                         where: { arrival_number: arrivalNumber },
                         transaction: t
                     })
 
+                    // if the generated arrival number is unique
                     if (!existingArrival) {
                         isUnique = true
                     }
                 } while (!isUnique)
 
-                // Create arrival with required fields
+                // create arrival with required fields
                 const arrivalData: Omit<
                     ArrivalAttributes,
                     | 'arrival_id'
@@ -220,57 +234,64 @@ export default {
 
                 await database.Arrival.create(arrivalData, { transaction: t })
 
-                // Commit transaction
+                // commit transaction
                 await t.commit()
 
+                // return response
                 return httpResponse(req, res, 201, responseMessage.CREATED, { arrival_number: arrivalNumber })
             } catch (error) {
-                // Rollback transaction on error
+                // rollback transaction on error
                 await t.rollback()
                 throw error instanceof Error ? error : new Error('Unknown error occurred')
             }
         } catch (error) {
+            // return error
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
     // ! delete arrival (single)
     deleteArrival: async (req: Request, res: Response, next: NextFunction) => {
         try {
+            // get arrival id
             const arrivalId = req.params.arrivalId
 
-            // Start a transaction
+            // start a transaction
             const t = await database.sequelize.transaction()
 
             try {
+                // get arrival
                 const arrival = await database.Arrival.findOne<Model<ArrivalAttributes>>({
                     where: {
                         arrival_number: arrivalId
                     }
                 })
 
+                // if arrival not found
                 if (!arrival) {
                     return httpError(next, new Error('Arrival not found'), req, 404)
                 }
 
-                // Delete associated arrival products first
+                // delete associated arrival products first
                 await database.ArrivalProduct.destroy({
                     where: { arrival_id: arrival.getDataValue('arrival_id') },
                     transaction: t
                 })
 
-                // Then delete the arrival
+                // delete the arrival
                 await arrival.destroy({ transaction: t })
 
-                // Commit transaction
+                // commit transaction
                 await t.commit()
 
+                // return response
                 return httpResponse(req, res, 200, responseMessage.SUCCESS, { arrival_number: arrivalId })
             } catch (error) {
-                // Rollback transaction on error
+                // rollback transaction on error
                 await t.rollback()
                 throw error instanceof Error ? error : new Error('Unknown error occurred')
             }
         } catch (error) {
+            // return error
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
@@ -278,13 +299,14 @@ export default {
     // ! delete arrival (multiple)
     deleteMultipleArrival: async (req: Request<Record<string, never>, unknown, DeleteMultipleArrivalsRequest>, res: Response, next: NextFunction) => {
         try {
+            // get body
             const { arrivalNumbers } = req.body
 
-            // Start a transaction
+            // start a transaction
             const t = await database.sequelize.transaction()
 
             try {
-                // First get all arrival IDs
+                // get all arrival ids
                 const arrivals = await database.Arrival.findAll<Model<ArrivalAttributes>>({
                     where: {
                         arrival_number: {
@@ -293,13 +315,14 @@ export default {
                     }
                 })
 
+                // if no arrivals found
                 if (!arrivals.length) {
                     return httpError(next, new Error('No arrivals found'), req, 404)
                 }
 
                 const arrivalIds = arrivals.map((arrival) => arrival.getDataValue('arrival_id'))
 
-                // Delete associated arrival products first
+                // delete associated arrival products first
                 await database.ArrivalProduct.destroy({
                     where: {
                         arrival_id: {
@@ -309,7 +332,7 @@ export default {
                     transaction: t
                 })
 
-                // Then delete the arrivals
+                // delete the arrivals
                 await database.Arrival.destroy({
                     where: {
                         arrival_number: {
@@ -319,19 +342,21 @@ export default {
                     transaction: t
                 })
 
-                // Commit transaction
+                // commit transaction
                 await t.commit()
 
+                // return response
                 return httpResponse(req, res, 200, responseMessage.SUCCESS, {
                     deleted_arrivals: arrivalNumbers,
                     count: arrivalNumbers.length
                 })
             } catch (error) {
-                // Rollback transaction on error
+                // rollback transaction on error
                 await t.rollback()
                 throw error instanceof Error ? error : new Error('Unknown error occurred')
             }
         } catch (error) {
+            // return error
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
@@ -363,11 +388,11 @@ export default {
 
             const updateData = req.body
 
-            // Start a transaction to ensure data consistency
+            // start a transaction
             const t = await database.sequelize.transaction()
 
             try {
-                // Update arrival details - only include defined fields
+                // update arrival details - only include defined fields
                 const updateFields: Partial<ArrivalAttributes> = {}
 
                 if (updateData.title !== undefined) updateFields.title = updateData.title
@@ -381,23 +406,28 @@ export default {
 
                 await foundArrival.update(updateFields, { transaction: t })
 
-                // Commit transaction
+                // commit transaction
                 await t.commit()
 
+                // return response
                 return httpResponse(req, res, 200, responseMessage.SUCCESS, { arrival_number: arrivalId })
             } catch (error) {
-                // Rollback transaction on error
+                // rollback transaction on error
                 await t.rollback()
                 throw error instanceof Error ? error : new Error('Unknown error occurred')
             }
         } catch (error) {
+            // return error
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
     // ! start processing arrival
     startProcessing: async (req: Request<Record<string, never>, unknown, StartProcessingRequest>, res: Response, next: NextFunction) => {
         try {
+            // get arrival id
             const arrivalId = req.params.arrivalId
+
+            // get body
             const { received_pallets = 0, received_boxes, received_kilograms = 0, received_pieces = 0 } = req.body
 
             // start a transaction
@@ -412,6 +442,7 @@ export default {
                     transaction: t
                 })
 
+                // if arrival not found
                 if (!arrival) {
                     await t.rollback()
                     return httpError(next, new Error('Arrival not found'), req, 404)
@@ -439,6 +470,7 @@ export default {
                 // commit transaction
                 await t.commit()
 
+                // return response
                 return httpResponse(req, res, 200, responseMessage.SUCCESS, {
                     arrival_number: arrivalId,
                     status: EArrivalStatus.IN_PROGRESS
@@ -449,14 +481,17 @@ export default {
                 throw error instanceof Error ? error : new Error('Unknown error occurred')
             }
         } catch (error) {
+            // return error
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
     // ! scan arrival
     scanArrival: async (req: Request<Record<string, never>, unknown, ScanArrivalRequest>, res: Response, next: NextFunction) => {
         try {
+            // get arrival id
             const arrivalId = req.params.arrivalId
 
+            // get body
             const { condition_id, received_quantity, product_id } = req.body
 
             // start a transaction
@@ -471,6 +506,7 @@ export default {
                     transaction: t
                 })
 
+                // if arrival not found
                 if (!arrival) {
                     await t.rollback()
                     return httpError(next, new Error('Arrival not found'), req, 404)
@@ -482,7 +518,7 @@ export default {
                     return httpError(next, new Error('Only in progress arrivals can be scanned'), req, 403)
                 }
 
-                // Get the current arrival product record
+                // get the current arrival product record
                 const arrivalProduct = await database.ArrivalProduct.findOne({
                     where: {
                         arrival_id: await arrival.getDataValue('arrival_id'),
@@ -491,22 +527,24 @@ export default {
                     transaction: t
                 })
 
+                // if product not found in this arrival
                 if (!arrivalProduct) {
                     await t.rollback()
                     return httpError(next, new Error('Product not found in this arrival'), req, 404)
                 }
 
-                // Get current quantities
+                // get current quantities
                 const currentReceivedQuantity = Number(arrivalProduct.getDataValue('received_quantity')) || 0
                 const expectedQuantity = Number(arrivalProduct.getDataValue('expected_quantity'))
                 const updatedReceivedQuantity = currentReceivedQuantity + Number(received_quantity)
 
-                // Only check if adding would exceed expected quantity
+                // only check if adding would exceed expected quantity
                 if (updatedReceivedQuantity > expectedQuantity) {
                     await t.rollback()
                     return httpError(next, new Error('Cannot add quantity - would exceed expected quantity'), req, 400)
                 }
 
+                // update arrival product
                 await database.ArrivalProduct.update(
                     {
                         condition_id,
@@ -539,8 +577,10 @@ export default {
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
+    // ! finish processing
     finishProcessing: async (req: Request, res: Response, next: NextFunction) => {
         try {
+            // get arrival id
             const arrivalId = req.params.arrivalId
 
             // start a transaction
@@ -555,6 +595,7 @@ export default {
                     transaction: t
                 })
 
+                // if arrival not found
                 if (!arrival) {
                     await t.rollback()
                     return httpError(next, new Error('Arrival not found'), req, 404)
@@ -566,7 +607,7 @@ export default {
                     return httpError(next, new Error('Only in progress arrivals can be finished'), req, 403)
                 }
 
-                // Get all arrival products for this arrival to check for discrepancies
+                // get all arrival products for this arrival to check for discrepancies
                 const arrivalProducts = await database.ArrivalProduct.findAll({
                     where: {
                         arrival_id: await arrival.getDataValue('arrival_id')
@@ -580,19 +621,26 @@ export default {
                     transaction: t
                 })
 
-                // Check for discrepancies and collect details
+                // check for discrepancies and collect details
                 let hasDiscrepancy = false
 
+                // product discrepancies
                 const productDiscrepancies: ProductDiscrepancy[] = []
 
+                // loop through arrival products
                 for (const product of arrivalProducts) {
+                    // get expected and received quantities
                     const expectedQty = Number(product.getDataValue('expected_quantity'))
                     const receivedQty = Number(product.getDataValue('received_quantity'))
 
+                    // if there is a discrepancy
                     if (expectedQty !== receivedQty) {
                         hasDiscrepancy = true
+
+                        // get product data
                         const productData = product.get('Product') as { product_id: number; name: string; tsku: string } | null
 
+                        // add product discrepancy
                         productDiscrepancies.push({
                             product_id: Number(product.getDataValue('product_id')),
                             product_name: productData?.name ?? null,
@@ -604,10 +652,11 @@ export default {
                     }
                 }
 
-                // Check for box discrepancy
+                // check for box discrepancy
                 const expectedBoxes = Number(arrival.getDataValue('expected_boxes'))
                 const receivedBoxes = Number(arrival.getDataValue('received_boxes'))
 
+                // box discrepancy
                 const boxDiscrepancy: BoxDiscrepancy | null =
                     expectedBoxes !== receivedBoxes
                         ? {
@@ -617,7 +666,7 @@ export default {
                           }
                         : null
 
-                // Set appropriate status based on any discrepancy
+                // set appropriate status based on any discrepancy
                 const status = hasDiscrepancy || boxDiscrepancy ? EArrivalStatus.COMPLETED_WITH_DISCREPANCY : EArrivalStatus.FINISHED
 
                 // update arrival with finished date and status
@@ -632,7 +681,7 @@ export default {
                 // commit transaction
                 await t.commit()
 
-                // Prepare response with discrepancy details
+                // prepare response with discrepancy details
                 const response: DiscrepancyResponse = {
                     arrival_number: arrivalId,
                     status: status,
@@ -643,12 +692,15 @@ export default {
                     }
                 }
 
-                // Return success response with discrepancy details
+                // return success response with discrepancy details
                 return httpResponse(req, res, 200, responseMessage.SUCCESS, response)
             } catch (error) {
-                return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
+                // rollback transaction on error
+                await t.rollback()
+                throw error instanceof Error ? error : new Error('Unknown error occurred')
             }
         } catch (error) {
+            // return error
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     },
@@ -659,8 +711,10 @@ export default {
         next: NextFunction
     ) => {
         try {
+            // get arrival id
             const arrivalId = req.params.arrivalId
 
+            // get body
             const { arrival_products }: { arrival_products: AddProductsToArrivalRequest[] } = req.body
 
             // start a transaction
@@ -675,6 +729,7 @@ export default {
                     transaction: t
                 })
 
+                // if arrival not found
                 if (!arrival) {
                     await t.rollback()
                     return httpError(next, new Error('Arrival not found'), req, 404)
@@ -712,6 +767,7 @@ export default {
                 // commit transaction
                 await t.commit()
 
+                // return response
                 return httpResponse(req, res, 200, responseMessage.SUCCESS, {
                     arrival_number: arrivalId,
                     status: EArrivalStatus.UPCOMING
@@ -722,6 +778,7 @@ export default {
                 throw error instanceof Error ? error : new Error('Unknown error occurred')
             }
         } catch (error) {
+            // return error
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     }

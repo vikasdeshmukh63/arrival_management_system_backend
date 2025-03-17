@@ -12,21 +12,31 @@ export default {
     // ! get all brands
     getAllBrands: async (req: Request, res: Response, next: NextFunction) => {
         try {
+            // get search query
             const searchQuery = typeof req.query.search === 'string' ? req.query.search : ''
+
+            // get order parameter
             const orderParam = req.query.order as string | undefined
+
+            // get order direction
             const orderDirection = orderParam?.toLowerCase() === 'desc' ? 'DESC' : 'ASC'
 
+            // where options
             const where: WhereOptions = {}
+
+            // if search query
             if (searchQuery) {
                 where[Op.or as keyof WhereOptions] = [
                     { name: { [Op.iLike]: `%${searchQuery}%` } }
                 ]
             }
 
+            // find all options
             const findAllOptions = {
                 order: [['name', orderDirection]] as [string, string][]
             }
 
+            // get paginated response
             const paginatedResponse = await getPaginatedResponse(
                 database.Brand,
                 where,
@@ -34,8 +44,10 @@ export default {
                 getPaginationParams(req)
             )
 
+            // return response
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
         } catch (err) {
+            // return error
             const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)
             return httpError(next, error, req, 500)
         }

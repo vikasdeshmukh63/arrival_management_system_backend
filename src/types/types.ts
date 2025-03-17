@@ -40,6 +40,7 @@ export interface CreateArrivalRequest {
     notes?: string
 }
 
+// start processing request
 export interface StartProcessingRequest {
     received_pallets?: number
     received_boxes: number
@@ -47,6 +48,7 @@ export interface StartProcessingRequest {
     received_pieces?: number
 }
 
+// update arrival request
 export interface UpdateArrivalRequest {
     title?: string
     supplier_id?: number
@@ -58,12 +60,14 @@ export interface UpdateArrivalRequest {
     notes?: string
 }
 
+// start processing request
 export interface StartProcessingRequest {
     actualPallets: number
     actualBoxes: number
     actualPieces: number
 }
 
+// scan arrival request
 export interface ScanArrivalRequest {
     barcode?: string
     condition_id: number
@@ -71,12 +75,14 @@ export interface ScanArrivalRequest {
     product_id: number
 }
 
+// add products to arrival request
 export interface AddProductsToArrivalRequest {
     product_id: number
-    expected_quantity: number,
+    expected_quantity: number
     condition_id: number
 }
 
+// product discrepancy
 export interface ProductDiscrepancy {
     product_id: number
     product_name: string | null
@@ -86,12 +92,14 @@ export interface ProductDiscrepancy {
     difference: number
 }
 
+// box discrepancy
 export interface BoxDiscrepancy {
     expected_boxes: number
     received_boxes: number
     difference: number
 }
 
+// discrepancy response
 export interface DiscrepancyResponse {
     arrival_number: string
     status: string
@@ -102,6 +110,7 @@ export interface DiscrepancyResponse {
     }
 }
 
+// arrival attributes
 export interface ArrivalAttributes {
     arrival_id: number
     arrival_number: string
@@ -129,6 +138,7 @@ export interface ArrivalAttributes {
     updatedAt: Date
 }
 
+// arrival product
 export interface IArrivalProduct {
     arrival_id: number
     product_id: number
@@ -137,6 +147,7 @@ export interface IArrivalProduct {
     condition_id?: number
 }
 
+// delete multiple arrivals request
 export interface DeleteMultipleArrivalsRequest {
     arrivalNumbers: string[]
 }
@@ -146,6 +157,7 @@ export interface CreateBrandRequest {
     name: string
 }
 
+// delete many brands request
 export interface DeleteManyBrandsRequest {
     ids: number[]
 }
@@ -156,6 +168,7 @@ export interface CreateCategoryRequest {
     description: string
 }
 
+// delete many categories request
 export interface DeleteManyCategoriesRequest {
     ids: number[]
 }
@@ -166,6 +179,7 @@ export interface CreateConditionRequest {
     description: string
 }
 
+// delete many conditions request
 export interface DeleteManyConditionsRequest {
     ids: number[]
 }
@@ -179,6 +193,7 @@ export interface CreateSupplierRequest {
     address: string
 }
 
+// delete many suppliers request
 export interface DeleteManySuppliersRequest {
     ids: number[]
 }
@@ -193,10 +208,12 @@ export interface CreateProductRequest {
     style_id: number
 }
 
+// delete many products request
 export interface DeleteManyProductsRequest {
     tsku: string[]
 }
 
+// user type
 export interface IUser extends Model {
     user_id: number
     name: string

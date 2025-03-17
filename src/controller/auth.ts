@@ -11,21 +11,27 @@ import config from '../config/config'
 import { EUserRole } from '../constants/application'
 import { AuthRequest } from '../middleware/auth'
 
+// get jwt secret
 const jwtSecret: Secret = config.JWT_SECRET || ''
+
+// if jwt secret is not set
 if (!config.JWT_SECRET) {
     throw new Error('JWT secret is required')
 }
 
+// jwt payload
 type JWTPayload = {
     user_id: number
     email: string
     role: string
 }
 
+// sign jwt
 const signJWT = (payload: JWTPayload): string => {
     return (sign as (payload: JWTPayload, secret: Secret, options: SignOptions) => string)(payload, jwtSecret, { expiresIn: '24h' })
 }
 
+// set cookie token
 const setCookieToken = (res: Response, token: string) => {
     res.cookie('token', token, {
         httpOnly: true,
@@ -36,17 +42,19 @@ const setCookieToken = (res: Response, token: string) => {
 }
 
 export default {
+    // ! register
     register: async (req: Request<Record<string, never>, unknown, RegisterRequest>, res: Response, next: NextFunction) => {
         try {
+            // get body
             const { name, email, password, role = EUserRole.ADMIN } = req.body
 
-            // Check if user already exists
+            // check if user already exists
             const existingUser = (await database.User.findOne({ where: { email } })) as IUser | null
             if (existingUser) {
                 throw new Error(responseMessage.ALREADY_EXIST('User with this email'))
             }
 
-            // Create new user
+            // create new user
             const user = (await database.User.create({
                 name,
                 email,
@@ -54,7 +62,7 @@ export default {
                 role
             })) as IUser
 
-            // Generate JWT token and set cookie
+            // generate jwt token and set cookie
             const payload: JWTPayload = { user_id: user.user_id, email: user.email, role: user.role }
             const token = signJWT(payload)
             setCookieToken(res, token)
@@ -73,27 +81,30 @@ export default {
         }
     },
 
+    // ! login
     login: async (req: Request<Record<string, never>, unknown, LoginRequest>, res: Response, next: NextFunction) => {
         try {
+            // get body
             const { email, password } = req.body
 
-            // Find user
+            // find user
             const user = (await database.User.findOne({ where: { email } })) as IUser | null
             if (!user) {
                 throw new Error(responseMessage.NOT_FOUND('User'))
             }
 
-            // Verify password
+            // verify password
             const isPasswordValid = await bcrypt.compare(password, user.password)
             if (!isPasswordValid) {
                 throw new Error('Invalid credentials')
             }
 
-            // Generate JWT token and set cookie
+            // generate jwt token and set cookie
             const payload: JWTPayload = { user_id: user.user_id, email: user.email, role: user.role }
             const token = signJWT(payload)
             setCookieToken(res, token)
 
+            // return response
             return httpResponse(req, res, 200, responseMessage.SUCCESS, {
                 user: {
                     user_id: user.user_id,
@@ -103,36 +114,46 @@ export default {
                 }
             })
         } catch (error) {
+            // return error
             const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG)
             return httpError(next, err, req, 401)
         }
     },
 
+    // ! logout
     logout: (req: Request, res: Response) => {
         res.clearCookie('token')
         return httpResponse(req, res, 200, responseMessage.SUCCESS, { message: 'Logged out successfully' })
     },
 
+    // ! get current user
     getCurrentUser: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const authReq = req as AuthRequest;
+            // get auth request
+            const authReq = req as AuthRequest
+
+            // if user is not authenticated
             if (!authReq.user) {
-                throw new Error('User not authenticated');
+                throw new Error('User not authenticated')
             }
 
-            const user = await database.User.findOne({ 
+            // find user
+            const user = await database.User.findOne({
                 where: { user_id: authReq.user.user_id },
-                attributes: ['user_id', 'name', 'email', 'role'] // Exclude sensitive data like password
-            });
+                attributes: ['user_id', 'name', 'email', 'role']
+            })
 
+            // if user not found
             if (!user) {
-                throw new Error(responseMessage.NOT_FOUND('User'));
+                throw new Error(responseMessage.NOT_FOUND('User'))
             }
 
-            return httpResponse(req, res, 200, responseMessage.SUCCESS, { user });
+            // return response
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, { user })
         } catch (error) {
-            const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG);
-            return httpError(next, err, req, 401);
+            // return error
+            const err = error instanceof Error ? error : new Error(responseMessage.SOMETHING_WENT_WRONG)
+            return httpError(next, err, req, 401)
         }
     }
 }

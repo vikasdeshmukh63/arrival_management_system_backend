@@ -1,7 +1,9 @@
 import os from 'os'
 import config from '../config/config'
 
+// quicker object
 export default {
+    // get system health
     getSystemHealth: () => {
         return {
             cpuUsage: os.loadavg(),
@@ -9,6 +11,7 @@ export default {
             freeMemory: `${(os.freemem() / 1024 / 1024).toFixed(2)} MB`
         }
     },
+    // get application health
     getApplicationHealth: () => {
         return {
             enviornment: config.ENV,

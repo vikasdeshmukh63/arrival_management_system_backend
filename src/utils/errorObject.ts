@@ -6,6 +6,7 @@ import { THttpError } from '../types/types'
 
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export default (err: Error | unknown, req: Request, errStatusCode: number = 500, validationErrors?: unknown): THttpError => {
+    // error object
     const errorObj: THttpError = {
         success: false,
         statusCode: errStatusCode,

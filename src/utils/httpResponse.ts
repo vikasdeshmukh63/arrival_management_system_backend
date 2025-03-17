@@ -4,6 +4,7 @@ import config from '../config/config'
 import { EApplicationEnvironment } from '../constants/application'
 
 export default (req: Request, res: Response, responseStatusCode: number, responseMessage: string, data: unknown = null): void => {
+    // response object
     const response: THttpResponse = {
         success: true,
         statusCode: responseStatusCode,

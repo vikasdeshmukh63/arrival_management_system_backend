@@ -1,12 +1,14 @@
 import { Request } from 'express'
 import { Model, ModelStatic, WhereOptions, FindOptions } from 'sequelize'
 
+// pagination params
 export interface PaginationParams {
     page: number
     itemsPerPage: number
     offset: number
 }
 
+// pagination metadata
 export interface PaginationMetadata {
     currentPage: number
     totalPages: number
@@ -16,14 +18,21 @@ export interface PaginationMetadata {
     hasPreviousPage: boolean
 }
 
+// paginated response
 export interface PaginatedResponse<T> {
     items: T[]
     pagination: PaginationMetadata
 }
 
+// get pagination params
 export const getPaginationParams = (req: Request): PaginationParams => {
+    // get page
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
+
+    // get items per page
     const itemsPerPage = Math.max(1, Math.min(100, parseInt(req.query.itemsPerPage as string) || 10))
+
+    // get offset
     const offset = (page - 1) * itemsPerPage
 
     return {
@@ -40,12 +49,13 @@ export const getPaginatedResponse = async <T extends Model>(
     paginationParams: PaginationParams,
     excludeFields: string[] = []
 ): Promise<PaginatedResponse<T>> => {
+    // get pagination params
     const { page, itemsPerPage, offset } = paginationParams
 
-    // Get total count for pagination
+    // get total count for pagination
     const totalCount = await model.count({ where })
 
-    // Get items with pagination
+    // get items with pagination
     const items = await model.findAll({
         ...findAllOptions,
         where,
@@ -56,7 +66,7 @@ export const getPaginatedResponse = async <T extends Model>(
         }
     })
 
-    // Calculate pagination metadata
+    // calculate pagination metadata
     const totalPages = Math.ceil(totalCount / itemsPerPage)
     const hasNextPage = page < totalPages
     const hasPreviousPage = page > 1

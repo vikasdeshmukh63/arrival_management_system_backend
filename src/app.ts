@@ -17,7 +17,7 @@ app.use(helmet())
 app.use(
     cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        origin: true, // Replace with your frontend URL
+        origin: true,
         credentials: true,
         allowedHeaders: ['Content-Type']
     })

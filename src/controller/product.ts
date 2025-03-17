@@ -8,23 +8,40 @@ import httpError from '../utils/httpError'
 import httpResponse from '../utils/httpResponse'
 import { getPaginatedResponse, getPaginationParams } from '../utils/pagination'
 
+// arrival product data type
 interface ArrivalProductData {
-    expected_quantity: number;
-    received_quantity: number;
-    Product: any; // You can make this more specific if needed
-    [key: string]: any;
+    expected_quantity: number
+    received_quantity: number
+    Product: {
+        product_id: number
+        name: string
+        tsku: string
+        barcode: string
+        Category?: { category_id: number, name: string }
+        Style?: { style_id: number, name: string }
+        Brand?: { brand_id: number, name: string }
+        Color?: { color_id: number, name: string }
+        Size?: { size_id: number, name: string }
+        [key: string]: unknown
+    }
+    [key: string]: unknown
 }
 
 export default {
+    // ! get all products
     getAllProducts: async (req: Request, res: Response, next: NextFunction) => {
         try {
+            // get search query
             const searchQuery = typeof req.query.search === 'string' ? req.query.search : ''
+
+            // get order param
             const orderParam = req.query.order as string | undefined
             const orderDirection = orderParam?.toLowerCase() === 'desc' ? 'DESC' : 'ASC'
 
+            // get where options
             const where: WhereOptions = {}
 
-            // Handle numeric filters
+            // handle numeric filters
             const numericFilters = {
                 category: 'category_id',
                 brand: 'brand_id',
@@ -33,6 +50,7 @@ export default {
                 style: 'style_id'
             }
 
+            // handle numeric filters
             Object.entries(numericFilters).forEach(([queryKey, whereKey]) => {
                 const value = req.query[queryKey]
                 if (typeof value === 'string') {
@@ -40,6 +58,7 @@ export default {
                 }
             })
 
+            // handle search query
             if (searchQuery) {
                 where[Op.or as keyof WhereOptions] = [
                     { name: { [Op.iLike]: `%${searchQuery}%` } },
@@ -48,6 +67,7 @@ export default {
                 ]
             }
 
+            // get find all options
             const findAllOptions = {
                 include: [
                     {
@@ -74,16 +94,22 @@ export default {
                 order: [['name', orderDirection]] as [string, string][]
             }
 
+            // get exclude fields
             const excludeFields = ['brand_id', 'category_id', 'size_id', 'color_id', 'style_id']
 
+            // get paginated response
             const paginatedResponse = await getPaginatedResponse(database.Product, where, findAllOptions, getPaginationParams(req), excludeFields)
 
+            // return response
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
         } catch (err) {
+            // return error
             const error = err instanceof Error ? err : new Error(responseMessage.SOMETHING_WENT_WRONG)
             return httpError(next, error, req, 500)
         }
     },
+
+    // ! create product
     createProduct: async (req: Request<Record<string, never>, unknown, CreateProductRequest>, res: Response, next: NextFunction) => {
         try {
             // getting request body
@@ -113,6 +139,8 @@ export default {
             return httpError(next, new Error(errorMessage), req, 500)
         }
     },
+
+    // ! update product
     updateProduct: async (req: Request<Record<string, never>, unknown, Partial<CreateProductRequest>>, res: Response, next: NextFunction) => {
         try {
             // getting request params
@@ -141,6 +169,8 @@ export default {
             return httpError(next, new Error(errorMessage), req, 500)
         }
     },
+
+    // ! delete product
     deleteProduct: async (req: Request<{ tsku: string }, unknown, DeleteManyProductsRequest>, res: Response, next: NextFunction) => {
         try {
             // extracting barcode
@@ -163,6 +193,8 @@ export default {
             return httpError(next, new Error(errorMessage), req, 500)
         }
     },
+
+    // ! delete many products
     deleteManyProducts: async (req: Request<Record<string, never>, unknown, DeleteManyProductsRequest>, res: Response, next: NextFunction) => {
         try {
             // getting request body
@@ -186,20 +218,26 @@ export default {
             return httpError(next, new Error(errorMessage), req, 500)
         }
     },
+
+    // ! get products with discrepancy and without discrepancy
     getProductsWithDiscrepancyAndWithoutDiscrepancy: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const arrivalId = req.params.arrivalId
+            // getting request params
+            const { arrivalId } = req.params
 
+            // getting arrival
             const arrival = await database.Arrival.findOne({
                 where: {
                     arrival_number: arrivalId
                 }
             })
 
+            // checking if arrival is found
             if (!arrival) {
                 return httpError(next, new Error(responseMessage.NOT_FOUND('arrival')), req, 404)
             }
 
+            // getting arrival products
             const arrivalProducts = await database.ArrivalProduct.findAll({
                 where: {
                     arrival_id: await arrival.getDataValue('arrival_id')
@@ -236,14 +274,21 @@ export default {
                 ]
             })
 
+            // initializing products with discrepancy and without discrepancy
             const productsWithDiscrepancy = []
             const productsWithoutDiscrepancy = []
 
+            // iterating through arrival products
             for (const arrivalProduct of arrivalProducts) {
+                // getting expected quantity
                 const expectedQuantity = Number(arrivalProduct.getDataValue('expected_quantity'))
+
+                // getting received quantity
                 const receivedQuantity = Number(arrivalProduct.getDataValue('received_quantity'))
 
+                // checking if received quantity is greater than 0
                 if (receivedQuantity > 0) {
+                    // creating product without discrepancy
                     const productWithoutDiscrepancy: ArrivalProductData = {
                         ...arrivalProduct.toJSON(),
                         expected_quantity: receivedQuantity,
@@ -252,7 +297,9 @@ export default {
                     productsWithoutDiscrepancy.push(productWithoutDiscrepancy)
                 }
 
+                // checking if expected quantity is greater than received quantity
                 if (expectedQuantity > receivedQuantity) {
+                    // creating product with discrepancy
                     const productWithDiscrepancy: ArrivalProductData = {
                         ...arrivalProduct.toJSON(),
                         expected_quantity: expectedQuantity - receivedQuantity,
@@ -267,6 +314,7 @@ export default {
                 productsWithoutDiscrepancy
             })
         } catch (error) {
+            // returning error
             const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
             return httpError(next, new Error(errorMessage), req, 500)
         }

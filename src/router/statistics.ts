@@ -4,10 +4,10 @@ import { authenticateToken } from '../middleware/auth'
 
 const router = Router()
 
-// Get arrival statistics
+// get arrival statistics
 router.get('/arrivals', authenticateToken, statistics.getArrivalStats)
 
-// Get entity counts
+// get entity counts
 router.get('/entities', authenticateToken, statistics.getEntityCounts)
 
 export default router 

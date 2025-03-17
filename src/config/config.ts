@@ -1,6 +1,6 @@
 import dotenvFlow from 'dotenv-flow'
 
-// Load environment variables from .env.development or .env.production
+// loading environment variables from .env.development or .env.production
 dotenvFlow.config({
     node_env: process.env.NODE_ENV || 'development'
 })

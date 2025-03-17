@@ -18,4 +18,4 @@ router.post('/logout', auth.logout)
 // get current user
 router.get('/me', authenticateToken, auth.getCurrentUser)
 
-export default router 
+export default router

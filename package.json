@@ -8,8 +8,8 @@
         "dist": "npx tsc",
         "lint": "eslint",
         "lint:fix": "eslint --fix",
-        "format:check": "prettier . --check",
-        "format:fix": "prettier . --fix",
+        "format:check": "prettier --check .",
+        "format:fix": "prettier --write .",
         "seed": "ts-node src/models/seed/seed.ts"
     },
     "keywords": [],

@@ -49,16 +49,7 @@ export default {
     getEntityCounts: async (req: Request, res: Response, next: NextFunction) => {
         try {
             // getting count
-            const [
-                brandCount,
-                categoryCount,
-                colorCount,
-                conditionCount,
-                productCount,
-                sizeCount,
-                styleCount,
-                supplierCount
-            ] = await Promise.all([
+            const [brandCount, categoryCount, colorCount, conditionCount, productCount, sizeCount, styleCount, supplierCount] = await Promise.all([
                 database.Brand.count(),
                 database.Category.count(),
                 database.Color.count(),
@@ -85,4 +76,4 @@ export default {
             return httpError(next, error instanceof Error ? error : new Error('Unknown error occurred'), req)
         }
     }
-} 
+}

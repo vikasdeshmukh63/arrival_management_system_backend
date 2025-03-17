@@ -76,4 +76,3 @@ export function generateBarcode(): string {
     // return complete ean 13 barcode
     return `${barcodeWithoutCheck}${checkDigit}`
 }
-

@@ -26,9 +26,7 @@ export default {
 
             // if search query
             if (searchQuery) {
-                where[Op.or as keyof WhereOptions] = [
-                    { name: { [Op.iLike]: `%${searchQuery}%` } }
-                ]
+                where[Op.or as keyof WhereOptions] = [{ name: { [Op.iLike]: `%${searchQuery}%` } }]
             }
 
             // find all options
@@ -37,12 +35,7 @@ export default {
             }
 
             // get paginated response
-            const paginatedResponse = await getPaginatedResponse(
-                database.Brand,
-                where,
-                findAllOptions,
-                getPaginationParams(req)
-            )
+            const paginatedResponse = await getPaginatedResponse(database.Brand, where, findAllOptions, getPaginationParams(req))
 
             // return response
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
@@ -154,4 +147,3 @@ export default {
         }
     }
 }
-

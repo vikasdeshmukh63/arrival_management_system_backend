@@ -24,30 +24,24 @@ export interface AuthRequest extends Request {
 
 // token payload interface
 interface TokenPayload {
-    user_id: number;
-    email: string;
-    role: EUserRole;
+    user_id: number
+    email: string
+    role: EUserRole
 }
 
 // check if payload is token payload
 function isTokenPayload(payload: unknown): payload is TokenPayload {
-    return (
-        typeof payload === 'object' &&
-        payload !== null &&
-        'user_id' in payload &&
-        'email' in payload &&
-        'role' in payload
-    )
+    return typeof payload === 'object' && payload !== null && 'user_id' in payload && 'email' in payload && 'role' in payload
 }
 
 // verify function type
-type Verify = (token: string, secret: Secret) => object;
+type Verify = (token: string, secret: Secret) => object
 
 // authenticate token middleware
 export const authenticateToken = (req: AuthRequest, _: Response, next: NextFunction) => {
     try {
         // getting token from cookies
-        const token = req.cookies.token;
+        const token = req.cookies.token
 
         // if token is not provided, throw an error
         if (!token) {
@@ -61,7 +55,7 @@ export const authenticateToken = (req: AuthRequest, _: Response, next: NextFunct
         if (!isTokenPayload(verifyResult)) {
             throw new Error('Invalid token payload')
         }
-        
+
         // set user in request
         req.user = verifyResult
 
@@ -93,4 +87,4 @@ export const requireAdmin = (req: AuthRequest, _: Response, next: NextFunction) 
         // return error
         return httpError(next, err, req, 403)
     }
-} 
+}

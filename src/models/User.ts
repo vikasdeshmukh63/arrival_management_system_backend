@@ -41,4 +41,3 @@ const User = (sequelize: Sequelize) =>
     )
 
 export default User
-

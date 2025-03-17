@@ -17,7 +17,6 @@ router.delete('/delete-many', authenticateToken, requireAdmin, category.deleteMa
 router.put('/:id', authenticateToken, category.updateCategory)
 
 // delete single category
-router.delete('/:id', authenticateToken,requireAdmin, category.deleteCategory)
+router.delete('/:id', authenticateToken, requireAdmin, category.deleteCategory)
 
 export default router
-

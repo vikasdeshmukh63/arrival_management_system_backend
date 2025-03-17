@@ -17,11 +17,11 @@ interface ArrivalProductData {
         name: string
         tsku: string
         barcode: string
-        Category?: { category_id: number, name: string }
-        Style?: { style_id: number, name: string }
-        Brand?: { brand_id: number, name: string }
-        Color?: { color_id: number, name: string }
-        Size?: { size_id: number, name: string }
+        Category?: { category_id: number; name: string }
+        Style?: { style_id: number; name: string }
+        Brand?: { brand_id: number; name: string }
+        Color?: { color_id: number; name: string }
+        Size?: { size_id: number; name: string }
         [key: string]: unknown
     }
     [key: string]: unknown
@@ -320,4 +320,3 @@ export default {
         }
     }
 }
-

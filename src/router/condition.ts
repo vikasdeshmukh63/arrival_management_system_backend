@@ -20,4 +20,3 @@ router.put('/:id', authenticateToken, condition.updateCondition)
 router.delete('/:id', authenticateToken, requireAdmin, condition.deleteCondition)
 
 export default router
-

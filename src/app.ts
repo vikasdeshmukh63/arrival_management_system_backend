@@ -19,7 +19,7 @@ app.use(
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         origin: true, // Replace with your frontend URL
         credentials: true,
-        allowedHeaders: ['Content-Type'],
+        allowedHeaders: ['Content-Type']
     })
 )
 

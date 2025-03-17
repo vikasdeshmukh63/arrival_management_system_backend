@@ -20,4 +20,3 @@ router.put('/:id', authenticateToken, size.updateSize)
 router.delete('/:id', authenticateToken, requireAdmin, size.deleteSize)
 
 export default router
-

@@ -37,4 +37,3 @@ router.post('/finish-processing/:arrivalId', authenticateToken, arrival.finishPr
 router.post('/add-products/:arrivalId', authenticateToken, requireAdmin, arrival.addProductsToArrival)
 
 export default router
-

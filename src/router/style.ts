@@ -20,4 +20,3 @@ router.put('/:id', authenticateToken, style.updateStyle)
 router.delete('/:id', authenticateToken, requireAdmin, style.deleteStyle)
 
 export default router
-

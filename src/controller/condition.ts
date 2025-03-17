@@ -33,12 +33,7 @@ export default {
             }
 
             // get paginated response
-            const paginatedResponse = await getPaginatedResponse(
-                database.Condition,
-                where,
-                findAllOptions,
-                getPaginationParams(req)
-            )
+            const paginatedResponse = await getPaginatedResponse(database.Condition, where, findAllOptions, getPaginationParams(req))
 
             // return response
             return httpResponse(req, res, 200, responseMessage.SUCCESS, paginatedResponse)
@@ -56,7 +51,7 @@ export default {
             const { name, description } = req.body
 
             // check if condition already exists
-                const isAlreadyExist = await database.Condition.findOne({ where: { name } })
+            const isAlreadyExist = await database.Condition.findOne({ where: { name } })
 
             // if condition already exists
             if (isAlreadyExist) {
@@ -125,7 +120,7 @@ export default {
             const conditionId = Number(req.params.id)
 
             // update condition
-            const updatedCondition = await database.Condition.update({...req.body}, { where: { condition_id: conditionId } })
+            const updatedCondition = await database.Condition.update({ ...req.body }, { where: { condition_id: conditionId } })
 
             // if condition is not found
             if (!updatedCondition) {
@@ -141,4 +136,3 @@ export default {
         }
     }
 }
-

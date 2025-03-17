@@ -2,7 +2,7 @@
 
 This document outlines the functional requirements for the Arrivals Management System, a web application designed to streamline the processing of incoming shipments (arrivals) at the warehouse. This document serves as a guide for the developer and ensures all stakeholders have a shared understanding of the system's functionality.
 
-The document covers the functionalities related to creating, managing, and processing arrivals, including manual product entry. It does *not* include functionalities related to inventory management beyond the initial arrival processing.
+The document covers the functionalities related to creating, managing, and processing arrivals, including manual product entry. It does _not_ include functionalities related to inventory management beyond the initial arrival processing.
 
 ## Definitions, Acronyms, and Abbreviations
 
@@ -54,7 +54,8 @@ Here’s the clean markdown version of the use cases:
 
 ## **Process Arrival Manually**
 
-**Preconditions:**  
+**Preconditions:**
+
 - An upcoming arrival exists.
 
 ### **Flow of Events**
@@ -67,20 +68,20 @@ Here’s the clean markdown version of the use cases:
 4. User chooses **"Process one by one."**
 5. User scans a barcode or selects **"No Barcode."**
 6. If **no barcode**:
-   - User enters product details:  
-     - **Brand**  
-     - **Category**  
-     - **Size**  
-     - **Color**  
-     - **Style**  
-     - **Condition**  
-     - **Quantity**
+    - User enters product details:
+        - **Brand**
+        - **Category**
+        - **Size**
+        - **Color**
+        - **Style**
+        - **Condition**
+        - **Quantity**
 7. If **barcode exists and is new**:
-   - User enters product details as above.
+    - User enters product details as above.
 8. If **barcode exists and is already registered**:
-   - User enters:  
-     - **Condition**  
-     - **Quantity**
+    - User enters:
+        - **Condition**
+        - **Quantity**
 9. User clicks **"Add."**
 10. Steps 5-9 are repeated until all products are processed.
 11. User clicks **"Finish Processing."**
@@ -91,19 +92,22 @@ Here’s the clean markdown version of the use cases:
 - User stays **IDLE** for a certain period of time (system saves progress).
 - User closes browser without finishing (system saves progress).
 
-**Postconditions:**  
-- Arrival is marked as **finished**.  
+**Postconditions:**
+
+- Arrival is marked as **finished**.
 - Product details are recorded.
 
-**Exceptions:**  
-- **Invalid barcode scan**.  
+**Exceptions:**
+
+- **Invalid barcode scan**.
 - **Database errors**.
 
 ---
 
 ## **Edit Arrival**
 
-**Preconditions:**  
+**Preconditions:**
+
 - An **upcoming, not started** arrival exists.
 
 ### **Flow of Events**
@@ -123,18 +127,21 @@ Here’s the clean markdown version of the use cases:
 
 - User clicks **"Cancel"** (no changes are saved).
 
-**Postconditions:**  
+**Postconditions:**
+
 - Arrival information is **updated** in the database.
 
-**Exceptions:**  
-- **Invalid input data**.  
+**Exceptions:**
+
+- **Invalid input data**.
 - **Database errors**.
 
 ---
 
 ## **Continue Processing Arrival**
 
-**Preconditions:**  
+**Preconditions:**
+
 - An arrival exists and has been **previously started but not finished**.
 
 ### **Flow of Events**
@@ -147,17 +154,20 @@ Here’s the clean markdown version of the use cases:
 4. System directly navigates to the product processing screen (**"Process Products"**).
 5. The flow continues as described in the **"Process Arrival Manually"** use case from **Step 5** onwards.
 
-**Postconditions:**  
+**Postconditions:**
+
 - Processing of the arrival **continues from where it left off**.
 
-**Exceptions:**  
+**Exceptions:**
+
 - **Database errors**.
 
 ---
 
 ## **View Upcoming/Finished Arrivals**
 
-**Preconditions:**  
+**Preconditions:**
+
 - None.
 
 ### **Flow of Events**
@@ -165,27 +175,30 @@ Here’s the clean markdown version of the use cases:
 **Main Flow:**
 
 1. User navigates to the **"Arrivals"** section.
-2. System displays two lists:  
-   - **Upcoming Arrivals**  
-   - **Finished Arrivals**  
+2. System displays two lists:
+    - **Upcoming Arrivals**
+    - **Finished Arrivals**
 3. **Upcoming Arrivals** are sorted by **expected date**.
-4. **Finished Arrivals** display:  
-   - **Expected date**  
-   - **Started date**  
-   - **Finished date**  
-   - **Received quantities**
+4. **Finished Arrivals** display:
+    - **Expected date**
+    - **Started date**
+    - **Finished date**
+    - **Received quantities**
 
-**Postconditions:**  
+**Postconditions:**
+
 - **Arrivals lists** are displayed.
 
-**Exceptions:**  
+**Exceptions:**
+
 - **Database errors**.
 
 ---
 
 ## **Finish Processing Arrival (Expanded)**
 
-**Preconditions:**  
+**Preconditions:**
+
 - An arrival is currently being processed.
 
 ### **Flow of Events**
@@ -200,10 +213,12 @@ Here’s the clean markdown version of the use cases:
 6. System marks the arrival as **finished**, updating its **status** and **timestamps**.
 7. System moves the arrival from the **Upcoming Arrivals** list to the **Finished Arrivals** list.
 
-**Postconditions:**  
+**Postconditions:**
+
 - Arrival is marked as **finished**.
 
-**Exceptions:**  
+**Exceptions:**
+
 - **Database errors**.
 
 ---

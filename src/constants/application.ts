@@ -1,6 +1,6 @@
 export enum EApplicationEnvironment {
     DEVELOPMENT = 'development',
-    PRODUCTION = 'production',
+    PRODUCTION = 'production'
 }
 
 export enum EArrivalStatus {

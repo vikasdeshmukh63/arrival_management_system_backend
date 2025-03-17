@@ -82,4 +82,4 @@ export const getPaginatedResponse = async <T extends Model>(
             hasPreviousPage
         }
     }
-} 
+}

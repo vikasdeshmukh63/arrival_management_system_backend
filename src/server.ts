@@ -15,8 +15,8 @@ void (async () => {
         logger.info('Database connection established successfully')
 
         // synchronize database
-        await db.sequelize.sync({ 
-            logging: (sql: string) => logger.debug(sql),
+        await db.sequelize.sync({
+            logging: (sql: string) => logger.debug(sql)
         })
         logger.success('Database synchronized successfully')
     } catch (error) {

@@ -14,7 +14,7 @@ export default tseslint.config({
     files: ['**/*.ts'],
     extends: [eslint.configs.recommended, ...tseslint.configs.recommendedTypeChecked, eslintConfigPrettier],
     rules: {
-        'no-useless-catch':0,
+        'no-useless-catch': 0,
         quotes: ['error', 'single', { allowTemplateLiterals: true }]
     }
 })

@@ -10,4 +10,4 @@ router.get('/arrivals', authenticateToken, statistics.getArrivalStats)
 // get entity counts
 router.get('/entities', authenticateToken, statistics.getEntityCounts)
 
-export default router 
+export default router

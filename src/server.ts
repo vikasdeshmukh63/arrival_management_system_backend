@@ -3,16 +3,18 @@ import config from './config/config'
 import db from './models/index'
 import { logger } from './utils/logger'
 
+// server
 const server = app.listen(config.PORT, () => {
     logger.success(`Server is running on port ${config.PORT}`)
 })
 
 void (async () => {
     try {
+        // authenticate database connection
         await db.sequelize.authenticate()
         logger.info('Database connection established successfully')
-        
-        // Configure Sequelize to use our custom logger and sync the database
+
+        // synchronize database
         await db.sequelize.sync({ 
             logging: (sql: string) => logger.debug(sql),
         })

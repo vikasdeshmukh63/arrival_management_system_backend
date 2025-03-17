@@ -7,10 +7,13 @@ import httpError from './utils/httpError'
 import globalErrorHandler from './middleware/globalErrorHandler'
 import router from './router'
 
+// app
 const app: Application = express()
 
+// helmet
 app.use(helmet())
 
+// cors
 app.use(
     cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -20,10 +23,13 @@ app.use(
     })
 )
 
+// express json
 app.use(express.json())
+
+// cookie parser
 app.use(cookieParser())
 
-// Routes
+// routes
 app.use(router)
 
 // 404 handler
@@ -35,6 +41,7 @@ app.use((req: Request, _: Response, next: NextFunction) => {
     }
 })
 
+// global error handler
 app.use(globalErrorHandler)
 
 export default app

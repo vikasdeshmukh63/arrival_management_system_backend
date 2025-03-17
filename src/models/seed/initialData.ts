@@ -4,7 +4,7 @@ import { IBrand, ICategory, ISize, IColor, IStyle, ICondition, ISupplier, IProdu
 
 async function seedDatabase() {
     try {
-        // Create Brands
+        // create brands
         const brands = (await db.Brand.bulkCreate([
             { name: 'Nike' },
             { name: 'Adidas' },
@@ -13,7 +13,7 @@ async function seedDatabase() {
             { name: 'New Balance' }
         ])) as unknown as IBrand[]
 
-        // Create Categories
+        // create categories
         const categories = (await db.Category.bulkCreate([
             { name: 'Shoes', description: 'All types of footwear' },
             { name: 'T-Shirts', description: 'Casual and sports t-shirts' },
@@ -22,7 +22,7 @@ async function seedDatabase() {
             { name: 'Accessories', description: 'Socks, caps, and other accessories' }
         ])) as unknown as ICategory[]
 
-        // Create Sizes
+        // create sizes
         const sizes = (await db.Size.bulkCreate([
             { name: 'XS' },
             { name: 'S' },
@@ -35,7 +35,7 @@ async function seedDatabase() {
             { name: '44' }
         ])) as unknown as ISize[]
 
-        // Create Colors
+        // create colors
         const colors = (await db.Color.bulkCreate([
             { name: 'Black' },
             { name: 'White' },
@@ -44,7 +44,7 @@ async function seedDatabase() {
             { name: 'Grey' }
         ])) as unknown as IColor[]
 
-        // Create Styles
+        // create styles
         const styles = (await db.Style.bulkCreate([
             { name: 'Casual' },
             { name: 'Sport' },
@@ -53,7 +53,7 @@ async function seedDatabase() {
             { name: 'Training' }
         ])) as unknown as IStyle[]
 
-        // Create Conditions
+        // create conditions
         const conditions = (await db.Condition.bulkCreate([
             { name: 'New', description: 'Brand new with tags' },
             { name: 'Like New', description: 'Used but in excellent condition' },
@@ -61,7 +61,7 @@ async function seedDatabase() {
             { name: 'Fair', description: 'Used with visible signs of wear' }
         ])) as unknown as ICondition[]
 
-        // Create Suppliers
+        // create suppliers
         const suppliers = (await db.Supplier.bulkCreate([
             {
                 name: 'SportsDirect Ltd',
@@ -79,7 +79,7 @@ async function seedDatabase() {
             }
         ])) as unknown as ISupplier[]
 
-        // Create Products
+        // create products
         const products = (await db.Product.bulkCreate([
             {
                 name: 'Nike Air Zoom Runner',
@@ -163,7 +163,7 @@ async function seedDatabase() {
             }
         ])) as unknown as IProduct[]
 
-        // Create Arrivals
+        // create arrivals
         const arrivals = (await db.Arrival.bulkCreate([
             {
                 arrival_number: 'ARR-2024-001',
@@ -200,7 +200,7 @@ async function seedDatabase() {
             }
         ])) as unknown as IArrival[]
 
-        // Create ArrivalProducts
+        // create arrival products
         ;(await db.ArrivalProduct.bulkCreate([
             {
                 arrival_id: arrivals[0].arrival_id,
@@ -260,7 +260,7 @@ async function seedDatabase() {
     }
 }
 
-// Function to clear all data
+// function to clear all data
 async function clearDatabase() {
     try {
         await db.ArrivalProduct.destroy({ where: {} })
@@ -281,5 +281,5 @@ async function clearDatabase() {
     }
 }
 
-// Export the functions
+// export the functions
 export { seedDatabase, clearDatabase }

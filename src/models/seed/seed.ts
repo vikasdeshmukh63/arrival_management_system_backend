@@ -3,10 +3,10 @@ import { clearDatabase, seedDatabase } from './initialData'
 
 async function runSeed() {
     try {
-        // First clear the database
+        // first clear the database
         await clearDatabase()
 
-        // Then seed with fresh data
+        // then seed with fresh data
         await seedDatabase()
 
         process.exit(0)

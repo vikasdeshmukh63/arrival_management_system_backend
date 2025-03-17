@@ -1,10 +1,12 @@
 import { Sequelize } from 'sequelize'
 import config from '../../config/config'
 
+// if database password is not provided, throw an error
 if (!config.DB_PASSWORD) {
     throw new Error('Database password is required')
 }
 
+// create sequelize instance
 const sequelize = new Sequelize({
     dialect: 'postgres',
     host: config.DB_HOST,

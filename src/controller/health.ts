@@ -1,27 +1,36 @@
-import { NextFunction, Request, Response } from 'express';
-import responseMessage from '../constants/responseMessage';
-import httpError from '../utils/httpError';
-import httpResponse from '../utils/httpResponse';
-import quicker from '../utils/quicker';
+import { NextFunction, Request, Response } from 'express'
+import responseMessage from '../constants/responseMessage'
+import httpError from '../utils/httpError'
+import httpResponse from '../utils/httpResponse'
+import quicker from '../utils/quicker'
 
 export default {
-    self: (req:Request, res:Response,next:NextFunction) => {
+    // ! self
+    self: (req: Request, res: Response, next: NextFunction) => {
         try {
-           return httpResponse(req,res,200,responseMessage.SUCCESS)
+            // return response
+            return httpResponse(req, res, 200, responseMessage.SUCCESS)
         } catch (err) {
-           return httpError(next,err,req,500)
+            // return error
+            return httpError(next, err, req, 500)
         }
     },
-    health: (req:Request, res:Response,next:NextFunction) => {
+
+    // ! health
+    health: (req: Request, res: Response, next: NextFunction) => {
         try {
+            // get health data
             const healthData = {
-                application:quicker.getApplicationHealth(),
-                system:quicker.getSystemHealth(),
-                timestamp:Date.now()
+                application: quicker.getApplicationHealth(),
+                system: quicker.getSystemHealth(),
+                timestamp: Date.now()
             }
-           return httpResponse(req,res,200,responseMessage.SUCCESS,healthData)
+
+            // return response
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, healthData)
         } catch (err) {
-           return httpError(next,err,req,500)
+            // return error
+            return httpError(next, err, req, 500)
         }
     }
 }
